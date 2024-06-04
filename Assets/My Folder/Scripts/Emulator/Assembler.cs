@@ -58,7 +58,7 @@ public class Assembler : MonoBehaviour
     public List<string> ParseCode = new List<string>();
 
     public List<ushort> code = new List<ushort>();
-    List<int> bytePerLine = new List<int>();
+    List<int> uShortPerLine = new List<int>();
 
     //Variables
     public Dictionary<string, ushort> variables = new Dictionary<string, ushort>();
@@ -71,8 +71,8 @@ public class Assembler : MonoBehaviour
         //Extract variable, lables with wrong address (line number)
         ExtractVariablesAndLables();
 
-        //GetBytesPerLine
-        getBytesPerLine();
+        //GetuShortsPerLine
+        getuShortsPerLine();
 
         //parse the code
         parseCode();
@@ -135,29 +135,13 @@ public class Assembler : MonoBehaviour
             }
         }
 
-        //remove the variables from the parseCode
+        //remove the variables and labels from the parseCode
         varIndices = varIndices.Concat(lableIndices).ToList();
         varIndices.Sort();
         ParseCode = removeIndicesFromArray(ParseCode, varIndices);
     }
 
-    void getBytesPerLine() {
-        for(int i = 0; i < ParseCode.Count; i++) {
-            string ln = ParseCode[i];
-            string[] temp = ln.Split(' ');
-            if(temp.Length == 1) {
-                bytePerLine.Add(1);
-            }
-            else if(temp.Length > 1) {
-                if(temp[1][0].ToString() == "#") {
-                    bytePerLine.Add(2);
-                }
-                else {
-                    bytePerLine.Add(3);
-                }
-            }
-        }
-
+    void getuShortsPerLine() {
         ushort addIndex = 0;
         var newLables = new Dictionary<string, ushort>();
         for(int i = 0; i < ParseCode.Count; i++) {
@@ -167,8 +151,17 @@ public class Assembler : MonoBehaviour
                     break;
                 }
             }
-            addIndex += (ushort)bytePerLine[i];
+
+            string[] temp = ParseCode[i].Split(' ');
+            if(temp.Length == 1) {
+                uShortPerLine.Add(1);
+            }
+            else if(temp.Length > 1) {
+                uShortPerLine.Add(2);
+            }
+            addIndex += (ushort)uShortPerLine[i];
         }
+
         lables = newLables;
     }
 
@@ -224,7 +217,7 @@ public class Assembler : MonoBehaviour
                     }
                     code.Add(opCode);
                     
-                    if(bytePerLine[i] < 3) {
+                    if(uShortPerLine[i] < 3) {
                         code.Add(CalAddress);
                         print(CalAddress);
                     }
