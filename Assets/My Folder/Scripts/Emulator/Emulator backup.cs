@@ -53,7 +53,6 @@ public class EmulatorBackup : MonoBehaviour
         public bool F_C;
         public bool F_Z;
         public bool HLT;
-        int yo;
 
         public void reset() {
             PC = 0x00;
@@ -62,7 +61,6 @@ public class EmulatorBackup : MonoBehaviour
             F_C = false;
             F_Z = false;
             HLT = false;
-            yo = 0;
         }
 
         public byte fetchByte(MEM mem) {

@@ -131,13 +131,16 @@ $ - Hexadecimal Number
 
 
 == STA, STX, STY (Continuing) ==
-%100100XX: STA :
-    %00 : $94 : "[Indirect], X"
-    %01 : $95 : "[Indirect], Y"
-%100101XX: STX :
-    %00 : $98 : "[Indirect], Y"
-%100110XX: STY :
-    %01 : $9C : "[Indirect], X"
+%100101XX: STA :
+    %00 : $94 : "[Indirect], 0"
+    %01 : $95 : "[Indirect], X"
+    %10 : $96 : "[Indirect], Y"
+%100110XX: STX :
+    %00 : $98 : "[Indirect], 0"
+    %01 : $99 : "[Indirect], Y"
+%100111XX: STY :
+    %00 : $9C : "[Indirect], 0"
+    %01 : $9D : "[Indirect], X"
 
 "^" -> These Instructions set the Flags
 

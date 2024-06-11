@@ -6,12 +6,14 @@ using System.Linq;
 using System;
 using Unity.VisualScripting;
 using System.Text.RegularExpressions;
+using System.Text;
 
 public class Assembler : MonoBehaviour
 {
 
     public Emulator emulator;
     public string ALProgramFilePath;
+    public string DebugFilePath;
     public string BinaryFilePath;
 
     // Properties of instructions
@@ -197,13 +199,20 @@ public class Assembler : MonoBehaviour
                             //operand is like - [address], X
                             char registor = temp[3].Trim()[0];
                             if(instruction == "STA") {
-                                if(registor == 'X' || registor == 'x') opCode = 0x94;
-                                else if(registor == 'Y' || registor == 'y') opCode = 0x95;
+                                if(registor == '0') opCode = 0x94;
+                                else if(registor == 'X' || registor == 'x') opCode = 0x95;
+                                else if(registor == 'Y' || registor == 'y') opCode = 0x96;
                                 else error("Invalid Registor");
                             }
-                            else if (instruction == "STX") opCode = 0x98;
+                            else if (instruction == "STX") {
+                                if(registor == '0') opCode = 0x98;
+                                else if(registor == 'Y' || registor == 'y') opCode = 0x99;
+                                else error("Invalid Registor");
+                            }
                             else if (instruction == "STY") {
-                                opCode = 0x9C;
+                                if(registor == '0') opCode = 0x9C;
+                                else if(registor == 'X' || registor == 'x') opCode = 0x9D;
+                                else error("Invalid Registor");
                             }
                             else error("Invalid Instruction for indirect command");
 
@@ -219,7 +228,7 @@ public class Assembler : MonoBehaviour
                     
                     if(uShortPerLine[i] < 3) {
                         code.Add(CalAddress);
-                        print(CalAddress);
+                        // print(CalAddress);
                     }
                     else {
                         code.Add((ushort)(CalAddress >> 8));
@@ -334,10 +343,11 @@ public class Assembler : MonoBehaviour
     }
 
     void saveCode() {
-        StreamWriter stm = new StreamWriter(BinaryFilePath);
+        StreamWriter stm = new StreamWriter(DebugFilePath);
         string ln = "";
         for(int i=0; i < code.Count; i++) {
-            string _byte = code[i].ToString("x2") + " ";
+            // print(code[i]);
+            string _byte = code[i].ToString("X4") + " ";
             ln += _byte;
             if((i+1) % 8 == 0 || i == code.Count - 1) {
                 stm.WriteLine(ln.Trim());
@@ -345,7 +355,17 @@ public class Assembler : MonoBehaviour
             }
         }
         stm.Close();
+
+        //save the code in a binary file
+        BinaryWriter bwm = new BinaryWriter(File.Open(BinaryFilePath, FileMode.Create), Encoding.UTF8);
+        for(int i=0; i < code.Count; i++) {
+            bwm.Write(code[i]);
+        }
+        bwm.Close();
+
+
         emulator.loadMem();
+
     }
 
     int precedence(string op){

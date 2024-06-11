@@ -5,6 +5,8 @@ using System;
 using TMPro;
 using UnityEngine.UI;
 using Unity.Mathematics;
+using System.Text;
+using System.Threading;
 
 public class Emulator : MonoBehaviour
 {
@@ -27,18 +29,14 @@ public class Emulator : MonoBehaviour
         }
 
         public ushort[] getMemory(string f) {
-            StreamReader inp_stm = new StreamReader(f);
-            int i=0;
+            BinaryReader reader = new BinaryReader(File.Open(f, FileMode.Open), Encoding.UTF8);
             ushort[] _Data = new ushort[maxMem];
-
-            while(!inp_stm.EndOfStream) {
-                string[] inp_ln = inp_stm.ReadLine().Split();
-                foreach(string _ushort in inp_ln) {
-                    _Data[i] = Convert.ToUInt16(_ushort, 16);
-                    i++;
-                }
+            int i = 0;
+            while(reader.BaseStream.Position != reader.BaseStream.Length) {
+                _Data[i] = reader.ReadUInt16();
+                i++;
             }
-            inp_stm.Close();
+            reader.Close();
             return _Data;
         }
     }
@@ -53,7 +51,6 @@ public class Emulator : MonoBehaviour
         public bool F_C;
         public bool F_Z;
         public bool HLT;
-        int yo;
 
         public void reset() {
             PC = 0x00;
@@ -62,10 +59,9 @@ public class Emulator : MonoBehaviour
             F_C = false;
             F_Z = false;
             HLT = false;
-            yo = 0;
         }
 
-        // public byte fetchByte(MEM mem) {
+        // publicfetchByte(MEM mem) {
         //     byte code = mem.Data[PC];
         //     PC++;
         //     return code;
@@ -92,7 +88,7 @@ public class Emulator : MonoBehaviour
         }
 
         public void updateFlag(int val) {
-            if(val > 0xFF) {
+            if(val > 0xFFFF) {
                 F_C = true;
             }else F_C = false;
             if(val == 0) {
@@ -126,8 +122,8 @@ public class Emulator : MonoBehaviour
             ushort imidiate;
             ushort address;
 
-            int int_val;
             ushort val;
+            int int_val;
 
             switch(instruction) {
                 case 0x0: //NOP
@@ -211,22 +207,37 @@ public class Emulator : MonoBehaviour
                     address = fetchShort(mem);
                     writeShort(mem, (ushort)(address+X), Y);
                     break;
-                case 0x94: //STA (indirect),X
+                case 0x94: //STA (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    writeShort(mem, address, A);
+                    break;
+                case 0x95: //STA (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     writeShort(mem, (ushort)(address+X), A);
                     break;
-                case 0x95: //STA (indirect),Y
+                case 0x96: //STA (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     writeShort(mem, (ushort)(address+Y), A);
                     break;
-                case 0x98: //STX (indirect),Y
+                case 0x98: //STX (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    writeShort(mem, address, X);
+                    break;
+                case 0x99: //STX (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     writeShort(mem, (ushort)(address+Y), X);
                     break;
-                case 0x9C: //STY (indirect),X
+                case 0x9C: //STY (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    writeShort(mem, address, Y);
+                    break;
+                case 0x9D: //STY (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     writeShort(mem, (ushort)(address+X), Y);
@@ -250,7 +261,7 @@ public class Emulator : MonoBehaviour
                     break;
 
                 case 0x2C: //TSX
-                    X = (byte)(8<<SP);
+                    X = (ushort)(8<<SP);
                     updateFlag(X);
                     break;
                 case 0x30: //TXS
@@ -266,111 +277,111 @@ public class Emulator : MonoBehaviour
 
                 case 0x3C: //AND imidiate
                     imidiate = fetchShort(mem);
-                    A = (byte)(A & imidiate);
+                    A = (ushort)(A & imidiate);
                     updateFlag(A);
                     break;
                 case 0x3D: //AND address
                     address = fetchShort(mem);
-                    A = (byte)(A & readShort(mem, address));
+                    A = (ushort)(A & readShort(mem, address));
                     updateFlag(A);
                     break;
                 case 0x3E: //AND (address+X)
                     address = fetchShort(mem);
-                    A = (byte)(A & readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A & readShort(mem, (ushort)(address+X)));
                     updateFlag(A);
                     break;
                 case 0x3F: //AND (address+Y)
                     address = fetchShort(mem);
-                    A = (byte)(A & readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A & readShort(mem, (ushort)(address+Y)));
                     updateFlag(A);
                     break;
                 case 0x40: //OR imidiate
                     imidiate = fetchShort(mem);
-                    A = (byte)(A | imidiate);
+                    A = (ushort)(A | imidiate);
                     updateFlag(A);
                     break;
                 case 0x41: //OR address
                     address = fetchShort(mem);
-                    A = (byte)(A | readShort(mem, address));
+                    A = (ushort)(A | readShort(mem, address));
                     updateFlag(A);
                     break;
                 case 0x42: //OR (address+X)
                     address = fetchShort(mem);
-                    A = (byte)(A | readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A | readShort(mem, (ushort)(address+X)));
                     updateFlag(A);
                     break;
                 case 0x43: //OR (address+Y)
                     address = fetchShort(mem);
-                    A = (byte)(A | readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A | readShort(mem, (ushort)(address+Y)));
                     updateFlag(A);
                     break;
                 case 0x44: //XOR imidiate
                     imidiate = fetchShort(mem);
-                    A = (byte)(A ^ imidiate);
+                    A = (ushort)(A ^ imidiate);
                     updateFlag(A);
                     break;
                 case 0x45: //XOR address
                     address = fetchShort(mem);
-                    A = (byte)(A ^ readShort(mem, address));
+                    A = (ushort)(A ^ readShort(mem, address));
                     updateFlag(A);
                     break;
                 case 0x46: //XOR (address+X)
                     address = fetchShort(mem);
-                    A = (byte)(A ^ readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A ^ readShort(mem, (ushort)(address+X)));
                     updateFlag(A);
                     break;
                 case 0x47: //XOR (address+Y)
                     address = fetchShort(mem);
-                    A = (byte)(A ^ readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A ^ readShort(mem, (ushort)(address+Y)));
                     updateFlag(A);
                     break;
                 
                 case 0x48: //ADD imidiate
                     imidiate = fetchShort(mem);
                     int_val = A + imidiate;
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x49: //ADD address
                     address = fetchShort(mem);
                     int_val = A + readShort(mem, address);
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4A: //ADD (address+X)
                     address = fetchShort(mem);
                     int_val = A + readShort(mem, (ushort)(address+X));
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4B: //ADD (address+Y)
                     address = fetchShort(mem);
                     int_val = A + readShort(mem, (ushort)(address+Y));
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4C: //SUB imidiate
                     imidiate = fetchShort(mem);
                     int_val = A - imidiate;
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4D: //SUB address
                     address = fetchShort(mem);
                     int_val = A - readShort(mem, address);
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4E: //SUB (address+X)
                     address = fetchShort(mem);
                     int_val = A - readShort(mem, (ushort)(address+X));
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4F: //SUB (address+Y)
                     address = fetchShort(mem);
                     int_val = A - readShort(mem, (ushort)(address+Y));
-                    A = (byte)int_val;
+                    A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x50: //CMP A imidiate
@@ -478,57 +489,57 @@ public class Emulator : MonoBehaviour
                 case 0x5D: //INC address
                     address = fetchShort(mem);
                     int_val = readShort(mem, address) + 1;
-                    writeShort(mem, address, (byte)int_val);
+                    writeShort(mem, address, (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x5E: //INC (address,X)
                     address = fetchShort(mem);
                     int_val = readShort(mem, (ushort)(address+X)) + 1;
-                    writeShort(mem, (ushort)(address+X), (byte)int_val);
+                    writeShort(mem, (ushort)(address+X), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x5F: //INC (address+Y)
                     address = fetchShort(mem);
                     int_val = readShort(mem, (ushort)(address+Y)) + 1;
-                    writeShort(mem, (ushort)(address+Y), (byte)int_val);
+                    writeShort(mem, (ushort)(address+Y), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x60: //INC X
                     int_val = X + 1;
-                    X = (byte)int_val;
+                    X = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x64: //INC Y
                     int_val = Y + 1;
-                    Y = (byte)int_val;
+                    Y = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x69: //DEC address
                     address = fetchShort(mem);
                     int_val = readShort(mem, address) - 1;
-                    writeShort(mem, address, (byte)int_val);
+                    writeShort(mem, address, (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x6A: //DEC (address,X)
                     address = fetchShort(mem);
                     int_val = readShort(mem, (ushort)(address+X)) - 1;
-                    writeShort(mem, (ushort)(address+X), (byte)int_val);
+                    writeShort(mem, (ushort)(address+X), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x6B: //DEC (address+Y)
                     address = fetchShort(mem);
                     int_val = readShort(mem, (ushort)(address+Y)) - 1;
-                    writeShort(mem, (ushort)(address+Y), (byte)int_val);
+                    writeShort(mem, (ushort)(address+Y), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x6C: //DEC X
                     int_val = X - 1;
-                    X = (byte)int_val;
+                    X = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x70: //DEC Y
                     int_val = Y - 1;
-                    Y = (byte)int_val;
+                    Y = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 
@@ -562,11 +573,8 @@ public class Emulator : MonoBehaviour
                     if(F_Z) PC = address;
                     break;
                 case 0x90: //DUP
-                    sc.mem = mem;
-                    sc.cpu = cpu;
-                    // sc.isUpdateRequest = true;
+                    sc.ScreenUpdate();
                     break;
-
                 case 0xff: //HLT
                     HLT = true;
                     break;

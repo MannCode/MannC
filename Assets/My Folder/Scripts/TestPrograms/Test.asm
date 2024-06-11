@@ -1,13 +1,11 @@
-.whiteColor = $1002 ; 8 bit white color
-.offset = $1003 ; 16 bit offset
+.whiteColor = $1002
+.offset = $1003
 
 intialize:
-	LDA #$70
+	LDA #$7000
 	STA offset
-	LDA #$00
-	STA (offset+1)
 
-	LDA #$01
+	LDA #$0001
 	STA whiteColor
 
 loop:
@@ -18,27 +16,18 @@ loop:
 
 start:
 	LDA whiteColor
-	LDX #00
-	STA [offset], X
+	STA [offset], 0
 	RTS
 
 inc:
-	INC (offset+1)
-	BCS incBig
-	RTS
-
-incBig:
 	INC offset
 	BCS reset
-	DUP
 	RTS
 
 reset:
-	LDA #$70
+	LDA #$7000
 	STA offset
-	LDA #$00
-	STA (offset+1)
-
+	DUP
 	DEC whiteColor
 	BNE intialize
 	RTS

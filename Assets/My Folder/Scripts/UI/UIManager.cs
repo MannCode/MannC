@@ -49,15 +49,15 @@ public class UIManager : MonoBehaviour
         r_SP.text = Convert.ToString(cpu.SP, 16);
         F_C.text = cpu.F_C.ToString();
         F_Z.text = cpu.F_Z.ToString();
-        cpu.readByte(mem, 0x6FFF);
-        r_OUT.text = Convert.ToString(cpu.readByte(mem, 0x6FFF), 16);
+        // cpu.readByte(mem, 0x6FFF);
+        r_OUT.text = Convert.ToString(cpu.readShort(mem, 0x6FFF), 16);
 
         if(cpu.HLT) {
             HLT.color = Color.red;
         }else HLT.color = Color.green;
         if(m_address.text != "") {
             ushort add = (ushort)Convert.ToUInt64(Convert.ToString(m_address.text), 16);
-            m_data.text = Convert.ToString(cpu.readByte(mem, add), 16);
+            m_data.text = Convert.ToString(cpu.readShort(mem, add), 16);
         }
         
         clock.text = "Clock -> "+emu.frequency.ToString();
