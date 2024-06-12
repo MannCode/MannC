@@ -73,3 +73,16 @@ $ - Hexadecimal number
 
 * some operators are :-
     +,-,*,/
+
+
+== @macros ==
+* syntax - @macro_name(macro_arguments)
+
+* defining @macros - 
+
+    ~macro_name macro_arguments {
+        // macro code here    
+
+    }
+
+* including @macro from another code - #include "filename_with_path"

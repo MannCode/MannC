@@ -7,14 +7,22 @@ using System;
 using Unity.VisualScripting;
 using System.Text.RegularExpressions;
 using System.Text;
+using UnityEngine.Assertions.Must;
 
 public class Assembler : MonoBehaviour
 {
 
+    struct Macro
+    {
+        public string name;
+        public string[] arguments;
+        public string body;
+    }
+
     public Emulator emulator;
     public string ALProgramFilePath;
-    public string DebugFilePath;
-    public string BinaryFilePath;
+
+    public string Finalcode;
 
     // Properties of instructions
     Dictionary<string, ushort> instructions = new Dictionary<string, ushort> {
@@ -54,7 +62,8 @@ public class Assembler : MonoBehaviour
         {"BCS", 0x0084},
         {"BNE", 0x0088},
         {"BEQ", 0x008C},
-        {"DUP", 0x0090},
+        {"DUP", 0xFFFE},
+        {"HLT", 0xFFFF}
     };
 
     public List<string> ParseCode = new List<string>();
@@ -68,9 +77,12 @@ public class Assembler : MonoBehaviour
     void Start()
     {
         //store each line of the file in an array
-        readFile();
+        ParseCode = readFile(ALProgramFilePath);
 
-        //Extract variable, lables with wrong address (line number)
+        //Replace @macros with the macros
+        ReplaceMacros();
+
+        // Extract variable, lables with wrong address (line number)
         ExtractVariablesAndLables();
 
         //GetuShortsPerLine
@@ -83,8 +95,9 @@ public class Assembler : MonoBehaviour
         saveCode();
     }
 
-    void readFile() {
-        StreamReader stm = new StreamReader(ALProgramFilePath);
+    List<string> readFile(string file) {
+        StreamReader stm = new StreamReader(file);
+        List<string> code = new List<string>();
 
         while(!stm.EndOfStream) {
             //read the lines and store it in parseCode
@@ -106,8 +119,124 @@ public class Assembler : MonoBehaviour
                 continue;
             }
 
-            ParseCode.Add(ln);
+            code.Add(ln);
         }
+        return code;
+    }
+
+    void ReplaceMacros() {
+        //get all #include if available
+        List<string> includedFiles = new List<string>();
+        includedFiles = GetIncludedFile();
+        
+
+        //get all the macros assigned from current file and other files also
+        // { "macro_name", "all_argument_seperated_with_space \n macro_body"}
+
+        List<Macro> macros = new List<Macro>();
+        macros = GetAllMacrosInCode(ParseCode);
+        //remove the macros from the parseCode
+        List<int> macroIndices = new List<int>();
+        for(int i=0; i < ParseCode.Count; i++) {
+            if(ParseCode[i][0] == '~') {
+                macroIndices.Add(i);
+                while(!ParseCode[i].Contains("}")) {
+                    i++;
+                    macroIndices.Add(i);
+                }
+            }
+        }
+        ParseCode = removeIndicesFromArray(ParseCode, macroIndices);
+        
+        //get macros from other files also
+        foreach(string includedFile in includedFiles) {
+            // print(includedFile);
+            List<string> includedFileCode = readFile(includedFile);
+            List<Macro> includedFileMacros = GetAllMacrosInCode(includedFileCode);
+            foreach(var macro in includedFileMacros) {
+                macros.Add(macro);
+            }
+        }
+
+        //replace the macros - @macro_name{argument1, argument2}
+        for(int i=0; i < ParseCode.Count; i++) {
+            string ln = ParseCode[i];
+            if(ln[0] == '@') {
+                // ParseCode.RemoveAt(i);
+                string macroName = ln[1..].Split('{')[0];
+                if(macros.Exists(x => x.name == macroName)) {
+                    string[] arguments = ln[1..].Split('{')[1].Split('}')[0].Split(',');
+                    string macroBody = macros.Find(x => x.name == macroName).body;
+                    string newMacroBody = macroBody;
+                    for(int j=0; j < arguments.Length; j++) {
+                        newMacroBody = newMacroBody.Replace(macros.Find(x => x.name == macroName).arguments[j], arguments[j].Trim());
+                    }
+                    string[] newMacroBodyLines = newMacroBody.Split('\n');
+                    ParseCode.InsertRange(i, newMacroBodyLines);
+                    ParseCode.RemoveAt(i + newMacroBodyLines.Length);
+                }
+            }
+        }
+
+
+        update_finalCode();
+    }
+
+    List<Macro> GetAllMacrosInCode(List<string> code) {
+        List<Macro> macros = new List<Macro>();
+        for(int i=0; i < code.Count; i++) {
+            string ln = code[i];
+            string[] words = ln.Split(' ');
+            if(words[0][0] == '~') {
+                string macroName = words[0][1..];
+                string macroBody = "";
+
+                string[] macroArguments = words[1..^1];
+
+                while (!code[i+1].Contains("}")) {
+                    i++;
+                    if(code[i+1].Contains("}")) {
+                        macroBody += code[i];
+                        break;
+                    }
+                    macroBody += code[i] + "\n";
+                }
+                macros.Add(new Macro {
+                    name = macroName,
+                    arguments = macroArguments,
+                    body = macroBody
+                });
+            }
+        }
+        
+        return macros;
+    }
+
+    List<string> GetIncludedFile() {
+        List<string> includedFiles = new List<string>();
+        List<int> include_lines = new List<int>();
+        for(int i=0; i < ParseCode.Count; i++) {
+            string ln = ParseCode[i];
+            string[] words = ln.Split(' ');
+            if(words[0] == "#include") {
+                string[] next = words[1..];
+                string includeFile = next[0][1..^1];
+                for(int j=1; j < next.Length; j++) {
+                    if(next[j][next[j].Length - 1] == '"') {
+                        includeFile += " " + next[j][0..^1];
+                        break;
+                    }
+                    includeFile += " " + next[j];
+                }
+                //remove the file name from alprogramFilepath
+                string newFilePath = ALProgramFilePath[0..^ALProgramFilePath.Split('/')[ALProgramFilePath.Split('/').Length - 1].Length];
+                includedFiles.Add(newFilePath + includeFile);
+                include_lines.Add(i);
+            }
+        }
+        //remove the include lines from the parseCode
+        ParseCode = removeIndicesFromArray(ParseCode, include_lines);
+        return includedFiles;
     }
 
     void ExtractVariablesAndLables() {
@@ -343,7 +472,7 @@ public class Assembler : MonoBehaviour
     }
 
     void saveCode() {
-        StreamWriter stm = new StreamWriter(DebugFilePath);
+        StreamWriter stm = new StreamWriter(ALProgramFilePath[0..^3] + "txt");
         string ln = "";
         for(int i=0; i < code.Count; i++) {
             // print(code[i]);
@@ -357,6 +486,7 @@ public class Assembler : MonoBehaviour
         stm.Close();
 
         //save the code in a binary file
+        string BinaryFilePath = ALProgramFilePath[0..^3] + "bin";
         BinaryWriter bwm = new BinaryWriter(File.Open(BinaryFilePath, FileMode.Create), Encoding.UTF8);
         for(int i=0; i < code.Count; i++) {
             bwm.Write(code[i]);
@@ -364,7 +494,7 @@ public class Assembler : MonoBehaviour
         bwm.Close();
 
 
-        emulator.loadMem();
+        emulator.loadMem(BinaryFilePath);
 
     }
 
@@ -391,6 +521,13 @@ public class Assembler : MonoBehaviour
             ParseCode.RemoveAt(index);
         }
         return ParseCode;
+    }
+
+    void update_finalCode() {
+        Finalcode = "";
+        foreach(string ln in ParseCode) {
+            Finalcode += ln + "\n";
+        }
     }
 
     void error(string message) {

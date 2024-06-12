@@ -10,8 +10,7 @@ using System.Threading;
 
 public class Emulator : MonoBehaviour
 {
-    // Program File Path
-    public string programFilePath;
+
     public ScreenRenderer screenRenderer;
 
     public Toggle toggle;
@@ -572,10 +571,10 @@ public class Emulator : MonoBehaviour
                     address = fetchShort(mem);
                     if(F_Z) PC = address;
                     break;
-                case 0x90: //DUP
+                case 0xfffe: //DUP
                     sc.ScreenUpdate();
                     break;
-                case 0xff: //HLT
+                case 0xffff: //HLT
                     HLT = true;
                     break;
                 default:
@@ -612,9 +611,12 @@ public class Emulator : MonoBehaviour
         cpu = new CPU();
         // mem = new MEM(mem.getMemory(programFilePath));
         cpu.HLT = true;
+        cpuSpeedNoDelay.onValueChanged.AddListener(OnCputSpeedNoDelayValueChanged);
+        maxSpeed.onValueChanged.AddListener(OnMaxSpeedValueChanged);
+        
     }
 
-    public void loadMem() {
+    public void loadMem(string programFilePath) {
         mem = new MEM(mem.getMemory(programFilePath));
         cpu.reset();
         isMemLoaded = true;
@@ -647,8 +649,6 @@ public class Emulator : MonoBehaviour
     public int index;
 
     void Update() {
-        index = (int)(int.Parse(maxSpeed.text) * cpuSpeedNoDelay.value);
-        if(index == 1) index = 0;
         int i = index;
         if(RunCPUbool) {
             if(!cpu.HLT) {
@@ -675,6 +675,27 @@ public class Emulator : MonoBehaviour
                 rate--;
             }
         }
+    }
+
+    void OnMaxSpeedValueChanged(string newHoursValue)
+    {
+        if (string.IsNullOrWhiteSpace(newHoursValue))
+            return;
+
+        if (int.TryParse(newHoursValue, out int result)) {
+            if (result < 0) {
+                index = 0;
+            }   
+            else {
+                index = (int)(int.Parse(maxSpeed.text) * cpuSpeedNoDelay.value);
+                // if(index == 1) index = 0;
+            }
+        }
+    }
+
+    void OnCputSpeedNoDelayValueChanged(float newValue)
+    {
+        OnMaxSpeedValueChanged(maxSpeed.text);
     }
 
     IEnumerator RunCPU() {

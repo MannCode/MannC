@@ -126,10 +126,6 @@ $ - Hexadecimal Number
 %100010XX:$89: BNE -> "if zero flag clear"
 %100011XX:$8D: BEQ -> "if zero flag set"
 
-== Display ==
-%10010000:$90: DUP -> "Update Diplay"
-
-
 == STA, STX, STY (Continuing) ==
 %100101XX: STA :
     %00 : $94 : "[Indirect], 0"
@@ -141,6 +137,12 @@ $ - Hexadecimal Number
 %100111XX: STY :
     %00 : $9C : "[Indirect], 0"
     %01 : $9D : "[Indirect], X"
+
+== Display ==
+$FFFE: DUP -> "Update Diplay"
+
+== HLT ==
+$FFFF : HLT -> "Halt computer"
 
 "^" -> These Instructions set the Flags
 
