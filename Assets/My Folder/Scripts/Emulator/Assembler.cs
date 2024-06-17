@@ -19,8 +19,31 @@ public class Assembler : MonoBehaviour
         public string body;
     }
 
+
+    public struct Variable {
+        public string scope;
+        public string name;
+        public string value;
+
+        public Variable(string Scope, string Name, string Value) {
+            scope = Scope;
+            name = Name;
+            value = Value;
+        }
+
+        public void setValue(string Value) {
+            value = Value;
+        }
+
+        public string getValue() {
+            return value;
+        }
+    }
+
     public Emulator emulator;
     public string ALProgramFilePath;
+
+    public string binaryFilePath;
 
     public string Finalcode;
 
@@ -72,12 +95,13 @@ public class Assembler : MonoBehaviour
     List<int> uShortPerLine = new List<int>();
 
     //Variables
-    public Dictionary<string, ushort> variables = new Dictionary<string, ushort>();
+    public List<Variable> variables = new List<Variable>();
     public Dictionary<string, ushort> lables = new Dictionary<string, ushort>();
     void Start()
     {
         //store each line of the file in an array
         ParseCode = readFile(ALProgramFilePath);
+
 
         //Replace @macros with the macros
         ReplaceMacros();
@@ -88,10 +112,10 @@ public class Assembler : MonoBehaviour
         //GetuShortsPerLine
         getuShortsPerLine();
 
-        //parse the code
+        // //parse the code
         parseCode();
 
-        //sabe the code in a file
+        // //sabe the code in a file
         saveCode();
     }
 
@@ -150,7 +174,6 @@ public class Assembler : MonoBehaviour
         
         //get macros from other files also
         foreach(string includedFile in includedFiles) {
-            // print(includedFile);
             List<string> includedFileCode = readFile(includedFile);
             List<Macro> includedFileMacros = GetAllMacrosInCode(includedFileCode);
             foreach(var macro in includedFileMacros) {
@@ -177,9 +200,6 @@ public class Assembler : MonoBehaviour
                 }
             }
         }
-
-
-        update_finalCode();
     }
 
     List<Macro> GetAllMacrosInCode(List<string> code) {
@@ -240,24 +260,35 @@ public class Assembler : MonoBehaviour
     }
 
     void ExtractVariablesAndLables() {
-        var varIndices = new List<int>();
         var lableIndices = new List<int>();
         int instructionIndex = 0;
+        var variableCount = 0;
+        var variableStartindex = 8192;
         for(int i = 0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
-
             //check for variables
             if(ln[0].ToString() == ".") {
+
                 string[] temp = ln.Split(' ');
                 string varName = temp[0][1..];
-                ushort varValue = getDecimalVal(temp[2]);
+                string varValue = "";
+                if(temp.Count() > 1) {
+                    varValue = "#"+getDecimalVal(temp[2]).ToString();
+                }
+                else {
+                    varValue = (variableCount + variableStartindex).ToString();
+                    variableCount++;
+                }
 
-                variables.Add(varName, varValue);
-                varIndices.Add(i);
+                Variable var = new Variable("global", varName, varValue);
+                variables.Add(var);
+                instructionIndex++;
             }
             //check for lables
             else if(ln[ln.Length - 1].ToString() == ":") {
                 string lableName = ln[0..^1];
+
+                // print(lableName + " " + instructionIndex);
                 lables.Add(lableName, (ushort)instructionIndex);
                 lableIndices.Add(i);
             }
@@ -265,16 +296,16 @@ public class Assembler : MonoBehaviour
                 instructionIndex++;
             }
         }
-
+        
         //remove the variables and labels from the parseCode
-        varIndices = varIndices.Concat(lableIndices).ToList();
-        varIndices.Sort();
-        ParseCode = removeIndicesFromArray(ParseCode, varIndices);
+        lableIndices.Sort();
+        ParseCode = removeIndicesFromArray(ParseCode, lableIndices);
     }
 
     void getuShortsPerLine() {
         ushort addIndex = 0;
         var newLables = new Dictionary<string, ushort>();
+        // var index = 0;
         for(int i = 0; i < ParseCode.Count; i++) {
             foreach(var lable in lables) {
                 if(lable.Value == i) {
@@ -284,7 +315,10 @@ public class Assembler : MonoBehaviour
             }
 
             string[] temp = ParseCode[i].Split(' ');
-            if(temp.Length == 1) {
+            if(temp[0][0] == '.') {
+                uShortPerLine.Add(0);
+            }
+            else if(temp.Length == 1) {
                 uShortPerLine.Add(1);
             }
             else if(temp.Length > 1) {
@@ -297,15 +331,21 @@ public class Assembler : MonoBehaviour
     }
 
     void parseCode() {
+        update_finalCode();
         for(int i=0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
             string[] temp = Regex.Split(ln, @" |,");
             string instruction = temp[0];
+            if(temp[0][0] == '.') {
+                    continue;
+            }
+
             if(temp.Length > 1) {
                 if(temp[1][0].ToString() == "#") {
                     // if operand is like - #value
                     code.Add(instructions[instruction]);
-                    code.Add(getDecimalVal(temp[1][1..]));
+                    // code.Add(getDecimalVal(temp[1][1..]));
+                    code.Add(evaluate(temp[1][1..], i).Item1);
                 }
                 else {
                     ushort opCode = 0;
@@ -322,7 +362,7 @@ public class Assembler : MonoBehaviour
                                 //operand is like - [address, Y]
                                 opCode = (ushort)(instructions[instruction] + 3);
                             }
-                            CalAddress = evaluate(temp[1][1..].Trim());
+                            CalAddress = evaluate(temp[1][1..].Trim(), i).Item1;
                         }
                         else {
                             //operand is like - [address], X
@@ -345,19 +385,25 @@ public class Assembler : MonoBehaviour
                             }
                             else error("Invalid Instruction for indirect command");
 
-                            CalAddress = evaluate(temp[1].Trim()[1..^1]);
+                            CalAddress = evaluate(temp[1].Trim()[1..^1], i).Item1;
                         }
                     }
                     else {
-                        //operand is like - address
-                        opCode = (ushort)(instructions[instruction] + 1);
-                        CalAddress = evaluate(temp[1].Trim());
+                        //operand is like - address or a single variable
+                        Tuple<ushort, bool> result = evaluate(temp[1].Trim(), i);
+                        CalAddress = result.Item1;
+                        if(result.Item2) {
+                            //if the variable is a constant
+                            opCode = (ushort)instructions[instruction];
+                        }
+                        else {
+                            opCode = (ushort)(instructions[instruction] + 1);
+                        }
                     }
                     code.Add(opCode);
                     
                     if(uShortPerLine[i] < 3) {
                         code.Add(CalAddress);
-                        // print(CalAddress);
                     }
                     else {
                         code.Add((ushort)(CalAddress >> 8));
@@ -371,7 +417,7 @@ public class Assembler : MonoBehaviour
         }
     }
 
-    ushort evaluate(string expression) {
+    Tuple<ushort, bool> evaluate(string expression, int i) {
         /*  1. While there are still tokens to be read in,
                 1.1 Get the next token.
                 1.2 If the token is:
@@ -405,11 +451,11 @@ public class Assembler : MonoBehaviour
         // Split the expression into tockens
         string[] tokens = Regex.Split(expression, @"([+\-*/\(\)])").Where(x => x != "" && x != " ").ToArray();
         List<string> valueStack = new List<string>();
+        bool isConstantVariable = false;
         List<string> operatorStack = new List<string>();
         foreach(string token in tokens) {
             string _token = token.Trim();
-            // print(token);
-            if(int.TryParse(_token, out _) || _token[0].ToString() == "$" || _token[0].ToString() == "%") {
+            if(int.TryParse(_token, out _) || _token[0].ToString() == "$" || _token[0].ToString() == "^") {
                 valueStack.Add(_token);
             }
             else if(_token == "(") {
@@ -429,10 +475,29 @@ public class Assembler : MonoBehaviour
             }
             else {
                 //it is a variable or a lable
-                if(variables.ContainsKey(_token)) {
-                    valueStack.Add(variables[_token].ToString());
+                string matchedVar = "";
+                int currentDist = i;
+                foreach(var variable in variables) {
+                    if(variable.Key.Contains(_token)) {
+                        if(Int32.TryParse(variable.Key.Split("@")[1], out int j)) {
+                            if(j < currentDist) {
+                                matchedVar = variable.Value.ToString();
+                                currentDist = i - j;
+                            }
+                        }
+                    }
+                }
+                // print(_token);
+                // print(matchedVar);
+                if(matchedVar != "") {
+                    if(matchedVar[0] == '#') {
+                        isConstantVariable = true;
+                    }
+                    valueStack.Add(matchedVar);
                 }
                 else if(lables.ContainsKey(_token)) {
+                    // print("Lable: " + _token);
+                    // print("Value: " + lables[_token]);
                     valueStack.Add(lables[_token].ToString());
                 }
                 else {
@@ -444,7 +509,13 @@ public class Assembler : MonoBehaviour
         while(operatorStack.Count > 0) {
             valueStack.Add(addValueToStack(operatorStack, valueStack));
         }
-        return getDecimalVal(valueStack[valueStack.Count - 1]);
+        string value = valueStack[valueStack.Count - 1];
+        if(value[0].ToString() == "#") {
+            return new Tuple<ushort, bool>(getDecimalVal(value[1..]), isConstantVariable);
+        }
+        else {
+            return new Tuple<ushort, bool>(getDecimalVal(value), isConstantVariable);
+        }
     }
 
     string addValueToStack(List<string> operatorStack, List<string> valueStack) {
@@ -475,7 +546,6 @@ public class Assembler : MonoBehaviour
         StreamWriter stm = new StreamWriter(ALProgramFilePath[0..^3] + "txt");
         string ln = "";
         for(int i=0; i < code.Count; i++) {
-            // print(code[i]);
             string _byte = code[i].ToString("X4") + " ";
             ln += _byte;
             if((i+1) % 8 == 0 || i == code.Count - 1) {
@@ -486,15 +556,15 @@ public class Assembler : MonoBehaviour
         stm.Close();
 
         //save the code in a binary file
-        string BinaryFilePath = ALProgramFilePath[0..^3] + "bin";
-        BinaryWriter bwm = new BinaryWriter(File.Open(BinaryFilePath, FileMode.Create), Encoding.UTF8);
+        binaryFilePath = ALProgramFilePath[0..^3] + "bin";
+        BinaryWriter bwm = new BinaryWriter(File.Open(binaryFilePath, FileMode.Create), Encoding.UTF8);
         for(int i=0; i < code.Count; i++) {
             bwm.Write(code[i]);
         }
         bwm.Close();
 
 
-        emulator.loadMem(BinaryFilePath);
+        emulator.loadMem(binaryFilePath);
 
     }
 
@@ -508,7 +578,7 @@ public class Assembler : MonoBehaviour
         if(operand[0].ToString() == "$") {
             return Convert.ToUInt16(operand[1..], 16);
         }
-        else if(operand[0].ToString() == "%") {
+        else if(operand[0].ToString() == "^") {
             return Convert.ToUInt16(operand[1..], 2);
         }
         else {

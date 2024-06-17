@@ -64,7 +64,7 @@
 ====== number base types ======
 
 $ - Hexadecimal number
-% - binary number
+^ - binary number
 "" - decimal number
 
 ====== Operators =====

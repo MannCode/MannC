@@ -39,8 +39,7 @@ public class ScreenRenderer : MonoBehaviour
 
     // Update is called once per frame
     public void ScreenUpdate()
-    {
-        
+    {   
         for(int i=0; i < texture.height*texture.width; i++) {
             ushort data_short = cpu.readShort(mem, (ushort)(0x7000+i));
             // bool val = (data_byte&(byte)Mathf.Pow(2, j))==Mathf.Pow(2, j);
@@ -58,9 +57,5 @@ public class ScreenRenderer : MonoBehaviour
             }
         }
         texture.Apply();
-    }
-
-    public static void yoto() {
-        Debug.Log("Yoto");
     }
 }

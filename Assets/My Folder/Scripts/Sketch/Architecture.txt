@@ -112,8 +112,8 @@ $ - Hexadecimal Number
     %00: $69 : "address"
     %01: $6A : "address + X"
     %10: $6B : "address + Y"
-%011011XX:$6C: DEX^ -> "INC X"
-%011100XX:$70: DEY^ -> "INC Y"
+%011011XX:$6C: DEX^ -> "DEC X"
+%011100XX:$70: DEY^ -> "DEC Y"
 
 == Jump ==
 %011101XX:$75: JMP -> "Jump to a mem address"

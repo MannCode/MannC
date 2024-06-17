@@ -606,8 +606,12 @@ public class Emulator : MonoBehaviour
 
     //Scene
     public TMP_Text OutputText;
+    public Assembler assembler;
+
+    public ushort[] memDataShower;
 
     public void Start() {
+        // Application.targetFrameRate = 500;
         cpu = new CPU();
         // mem = new MEM(mem.getMemory(programFilePath));
         cpu.HLT = true;
@@ -620,6 +624,7 @@ public class Emulator : MonoBehaviour
         mem = new MEM(mem.getMemory(programFilePath));
         cpu.reset();
         isMemLoaded = true;
+        memDataShower = mem.Data;
     }
 
 
@@ -628,6 +633,8 @@ public class Emulator : MonoBehaviour
         //Get The instruction set from the file and store it in his memory
         clock_step = 0;
         // mem = new MEM(mem.getMemory(programFilePath));
+        // loadMem(assembler.binaryFilePath);
+        // print(assembler.binaryFilePath);
         cpu.reset();
 
         cpu.HLT = false;
@@ -648,7 +655,7 @@ public class Emulator : MonoBehaviour
     [HideInInspector]
     public int index;
 
-    void Update() {
+    void FixedUpdate() {
         int i = index;
         if(RunCPUbool) {
             if(!cpu.HLT) {

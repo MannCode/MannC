@@ -1,5 +1,5 @@
-.whiteColor = $1002
-.offset = $1003
+.whiteColor
+.offset
 
 intialize:
 	LDA #$7000
@@ -8,23 +8,23 @@ intialize:
 	LDA #$0001
 	STA whiteColor
 
-loop:
+loop: ; 8
 	JSR start
 	JSR inc
 	JMP loop
 
 
-start:
+start: ; 14
 	LDA whiteColor
 	STA [offset], 0
 	RTS
 
-inc:
+inc: ; 19
 	INC offset
 	BCS reset
 	RTS
 
-reset:
+reset: ; 24
 	LDA #$7000
 	STA offset
 	DUP
