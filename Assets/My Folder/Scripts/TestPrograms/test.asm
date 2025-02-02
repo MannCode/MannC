@@ -1,0 +1,3 @@
+LDA #$100
+STA $6FFF
+HLT

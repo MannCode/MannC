@@ -1,0 +1,88 @@
+=======================================================
+                # MANN-8Bit-Assembler #
+=======================================================
+
+
+====== Instruction Format ======
+
+* First byte is opcode (XXXXXXYY) - X is instruction | and Y is its instances
+* If opcode Takes address :-
+    * Second and third byte is address
+  If opcode takes data :-
+    * Second byte is data
+  If opcode takes nothing :-
+    * No extra bytes needed
+
+==== How instruction is written ====
+
+* if instruction takes nothing
+    * [space/tab]+Instruction
+* if instruction takes data/address
+    * [space/tab]+Instruction+[Space]+[if imidiate]+[value]
+        * example - LDA ($00, X)
+
+^ Instruction - It defines the XXXXXX in the opcode (1st byte)
+^ if imidiate - It defines the opcode takes data or address (denoted by "#" or "")
+^ [value] - It defines the YY in the opcode and the value of data/address (2 and 3 byte) according to the instruction
+    * all the value types are:
+        * if imidiate is "" :
+            1. ""
+            3. address
+            4. [address, registor]
+            5. [address], register
+        * if imidiate is "#" :
+            1. data
+
+========= Simple rules for Assembler =======
+
+* Written in text files
+* One instruction per line
+
+
+======= Lables =======
+
+* Lable starts with ":" a colon
+* lable dont have a [space/tab] in the starting
+
+======= Variables ========
+
+* variable is just a address to the memory location in which value is stored
+* if want to assign
+    * name + [space] + "=" + [space] + [address]
+    * example - xpos = $0510
+* if want to use the variable
+    * .[name of variable]
+    * example - STA .xpos
+
+===== Comment =====
+
+* we have only single line commnents yet
+* comment starts with ";" a semicolon
+* comment can start after a instruction also and in a seperate line also
+
+
+====== number base types ======
+
+$ - Hexadecimal number
+^ - binary number
+"" - decimal number
+
+====== Operators =====
+
+* if data/address is in "()" parantaces then we can have operators inside them
+
+* some operators are :-
+    +,-,*,/
+
+
+== @macros ==
+* syntax - @macro_name macro_arguments
+
+* defining @macros - 
+
+    ~macro_name numberof_arguments {
+        // macro code here    
+    }
+
+* including @macro from another code - #include "filename_with_path"
+* arguments will be used like numbers - %1, %2, %3
