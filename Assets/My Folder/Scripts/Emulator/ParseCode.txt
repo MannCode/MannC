@@ -1,191 +1,25 @@
-.videoPage   2000
-.currentPage   2001
-.x   2002
-.y   2003
-.xdir   2004
-.ydir   2005
-.screenWidth = $F5
-.screenHieght = $8F
-.ballsize = 4
-.leftTileY   2006
-.rightTileY   2007
-.PatternY   2008
+.val   2000
+.index   2001
+    0000  LDA #42
+    0002  STA val
 start:
-    0000  LDA #$70
-    0002  STA videoPage
-    0004  LDA #$30
-    0006  STA leftTileY
-    0008  LDA #$70
-    000A  STA rightTileY
-    000C  LDA #$7F
-    000E  STA x
-    0010  LDA #$47
-    0012  STA y
+    0004  LDA #$7000
+    0006  STA index
+    0008  LDX #68
+    000A  LDY #$7288
 loop:
-    0014  DUP
-    0015  CLS
-    0016  JSR printCheckPattern
-    0018  JSR printTiles
-    001A  JSR changeRightTileY
-    001C  JSR printball
-    001E  JSR changePos
-    0020  JMP loop
-printCheckPattern:
-    0022  LDA PatternY
-    0024  CMP #$8F
-    0026  BCS printCheckPatternEnd
-    0028  LDA #$7F
-    002A  STA $1FCE
-    002C  LDA PatternY
-    002E  STA $1FCF
-    0030  JSR drawPoint
-    0032  ADD #2
-    0034  STA PatternY
-    0036  JMP printCheckPattern
-printCheckPatternEnd:
-    0038  LDA #0
-    003A  STA PatternY
-    003C  RTS
-printTiles:
-    003D  LDA #$5
-    003F  STA $1FCE
-    0041  LDA leftTileY
-    0043  STA $1FCF
-    0045  LDA #6
-    0047  STA $1FD0
-    0049  LDA #30
-    004B  STA $1FD1
-    004D  JSR drawRect
-    004F  LDA #$F5
-    0051  STA $1FCE
-    0053  LDA rightTileY
-    0055  STA $1FCF
-    0057  LDA #6
-    0059  STA $1FD0
-    005B  LDA #30
-    005D  STA $1FD1
-    005F  JSR drawRect
-    0061  RTS
-printball:
-    0062  LDA x
-    0064  STA $1FCE
-    0066  LDA y
-    0068  STA $1FCF
-    006A  LDA #ballsize
-    006C  STA $1FD0
-    006E  LDA #ballsize
-    0070  STA $1FD1
-    0072  JSR drawRect
-    0074  RTS
-changeRightTileY:
-    0075  LDA y
-    0077  SUB #9
-    0079  ADD #30
-    007B  ADD #($FFFF-$8F)
-    007D  BCS edgeExceded
-    007F  LDA y
-    0081  SUB #9
-    0083  BCS edgeExceded
-    0085  LDA y
-    0087  SUB #9
-    0089  STA rightTileY
-edgeExceded:
-    008B  RTS
-changePos:
-    008C  LDA x
-    008E  SUB #$B
-    0090  BEQ xdirPositive
-    0092  CMP #(screenWidth-ballsize-$B)
-    0094  BEQ xdirNegative
-xdirCheckEnd:
-    0096  LDA y
-    0098  BEQ ydirPositive
-    009A  CMP #(screenHieght-ballsize)
-    009C  BEQ ydirNegative
-ydirCheckEnd:
-    009E  LDA xdir
-    00A0  BEQ decX
-    00A2  JMP incX
-changeXEnd:
-    00A4  LDA ydir
-    00A6  BEQ decY
-    00A8  JMP incY
-changeYEnd:
-    00AA  RTS
-xdirPositive:
-    00AB  PHA
-    00AC  LDA #01
-    00AE  STA xdir
-    00B0  PLA
-    00B1  JMP xdirCheckEnd
-xdirNegative:
-    00B3  PHA
-    00B4  LDA #00
-    00B6  STA xdir
-    00B8  PLA
-    00B9  JMP xdirCheckEnd
-ydirPositive:
-    00BB  PHA
-    00BC  LDA #01
-    00BE  STA ydir
-    00C0  PLA
-    00C1  JMP ydirCheckEnd
-ydirNegative:
-    00C3  PHA
-    00C4  LDA #00
-    00C6  STA ydir
-    00C8  PLA
-    00C9  JMP ydirCheckEnd
-incX:
-    00CB  INC x
-    00CD  JMP changeXEnd
-decX:
-    00CF  DEC x
-    00D1  JMP changeXEnd
-incY:
-    00D3  INC y
-    00D5  JMP changeYEnd
-decY:
-    00D7  DEC y
-    00D9  JMP changeYEnd
-drawRect:
-.startPix   2009
-    00DB  LDA $1FCF
-    00DD  SLA #8
-    00DF  ADD $1FCE
-    00E1  ADD #$7000
-    00E3  STA startPix
-    00E5  LDY $1FD1
-loadX:
-    00E7  LDX $1FD0
-loopX:
-    00E9  JSR draw
-    00EB  INC startPix
-    00ED  DEX
-    00EE  BEQ loopY
-    00F0  JMP loopX
-loopY:
-    00F2  LDA startPix
-    00F4  ADD #$100
-    00F6  SUB $1FD0
-    00F8  STA startPix
-    00FA  DEY
-    00FB  BEQ end
-    00FD  JMP loadX
-draw:
-    00FF  LDA #01
-    0101  STA [startPix], 0
-    0103  RTS
-end:
-    0104  RTS
-drawPoint:
-    0105  PHA
-    0106  LDA $1FCF
-    0108  ADD videoPage
-    010A  SLA #8
-    010C  ADD $1FCE
-    010E  STA currentPage
-    0110  LDA #1
-    0112  STA [currentPage], 0
-    0114  PLA
-    0115  RTS
+    000C  LDA val
+    000E  STA [index], 0
+    0010  INC val
+    0012  CPX val
+    0014  BEQ reset
+loopC:
+    0016  DUP
+    0017  INC index
+    0019  CPY index
+    001B  BEQ start
+    001D  JMP loop
+reset:
+    001F  LDA #42
+    0021  STA val
+    0023  JMP loopC

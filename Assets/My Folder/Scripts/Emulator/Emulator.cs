@@ -52,6 +52,8 @@ public class Emulator : MonoBehaviour
         public bool F_Z;
         public bool HLT;
 
+        public bool Resent_Inrupt;
+
         public void reset() {
             PC = 0x00;
             SP = 0x6FFE;
@@ -124,6 +126,19 @@ public class Emulator : MonoBehaviour
 
 
         public void execute(CPU cpu, MEM mem, MEM mem_Backup, ScreenRenderer sc) {
+            // Get a key in the keyboard
+            if(Input.GetKeyDown(KeyCode.A) && !Resent_Inrupt) {
+                Resent_Inrupt = true;
+                // Switch to the intrupt address
+                PushStackShort(mem, PC);
+                PC = 0x3000;   
+            }
+            if(Input.GetKeyUp(KeyCode.A)) {
+                Resent_Inrupt = false;
+            }
+
+
+
             ushort instruction = fetchShort(mem);
             ushort imidiate;
             ushort address;
@@ -767,4 +782,8 @@ public class Emulator : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
     }
+}
+
+internal class keybord
+{
 }

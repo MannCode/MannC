@@ -55,7 +55,7 @@ public class Assembler : MonoBehaviour
         {"LDX", 0x0008},
         {"LDY", 0x000C},
         {"STA", 0x0010},
-        {"SYX", 0x0014},
+        {"STX", 0x0014},
         {"STY", 0x0018},
         {"TAX", 0x001C},
         {"TAY", 0x0020},
@@ -108,7 +108,7 @@ public class Assembler : MonoBehaviour
         //store each line of the file in an array
         ParseCode = readFile(ALProgramFilePath);
 
-
+        
         //Replace ~macros like actual code
         ParseCode = ReplaceMacrosFunctions(ParseCode);
         ReplaceMacrosDecleration();
@@ -122,7 +122,7 @@ public class Assembler : MonoBehaviour
         //GetuShortsPerLine
         getuShortsPerLine();
     
-
+        update_finalCode();
         // //parse the code
         parseCode();
 
@@ -235,90 +235,6 @@ public class Assembler : MonoBehaviour
         }
     }
 
-    // void ReplaceMacros() {
-    //     //get all #include if available
-    //     List<string> includedFiles = new List<string>();
-    //     includedFiles = GetIncludedFile();
-        
-
-    //     //get all the macros assigned from current file and other files also
-    //     // { "macro_name", "all_argument_seperated_with_space \n macro_body"}
-
-    //     List<Macro> macros = new List<Macro>();
-    //     macros = GetAllMacrosInCode(ParseCode);
-    //     //remove the macros from the parseCode
-    //     List<int> macroIndices = new List<int>();
-    //     for(int i=0; i < ParseCode.Count; i++) {
-    //         if(ParseCode[i][0] == '~') {
-    //             macroIndices.Add(i);
-    //             while(!ParseCode[i].Contains("}")) {
-    //                 i++;
-    //                 macroIndices.Add(i);
-    //             }
-    //         }
-    //     }
-    //     ParseCode = removeIndicesFromArray(ParseCode, macroIndices);
-        
-    //     //get macros from other files also
-    //     foreach(string includedFile in includedFiles) {
-    //         List<string> includedFileCode = readFile(includedFile);
-    //         List<Macro> includedFileMacros = GetAllMacrosInCode(includedFileCode);
-    //         foreach(var macro in includedFileMacros) {
-    //             macros.Add(macro);
-    //         }
-    //     }
-
-    //     //replace the macros - @macro_name{argument1, argument2}
-    //     for(int i=0; i < ParseCode.Count; i++) {
-    //         string ln = ParseCode[i];
-    //         if(ln[0] == '@') {
-    //             // ParseCode.RemoveAt(i);
-    //             string macroName = ln[1..].Split('{')[0];
-    //             if(macros.Exists(x => x.name == macroName)) {
-    //                 string[] arguments = ln[1..].Split('{')[1].Split('}')[0].Split(',');
-    //                 string macroBody = macros.Find(x => x.name == macroName).body;
-    //                 string newMacroBody = macroBody;
-    //                 for(int j=0; j < arguments.Length; j++) {
-    //                     // newMacroBody = newMacroBody.Replace(macros.Find(x => x.name == macroName).arguments[j], arguments[j].Trim());
-    //                 }
-    //                 string[] newMacroBodyLines = newMacroBody.Split('\n');
-    //                 ParseCode.InsertRange(i, newMacroBodyLines);
-    //                 ParseCode.RemoveAt(i + newMacroBodyLines.Length);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // List<Macro> GetAllMacrosInCode(List<string> code) {
-    //     List<Macro> macros = new List<Macro>();
-    //     for(int i=0; i < code.Count; i++) {
-    //         string ln = code[i];
-    //         string[] words = ln.Split(' ');
-    //         if(words[0][0] == '~') {
-    //             string macroName = words[0][1..];
-    //             string macroBody = "";
-
-    //             string[] macroArguments = words[1..^1];
-
-    //             while (!code[i+1].Contains("}")) {
-    //                 i++;
-    //                 if(code[i+1].Contains("}")) {
-    //                     macroBody += code[i];
-    //                     break;
-    //                 }
-    //                 macroBody += code[i] + "\n";
-    //             }
-    //             macros.Add(new Macro {
-    //                 name = macroName,
-    //                 arguments = macroArguments,
-    //                 body = macroBody
-    //             });
-    //         }
-    //     }
-        
-    //     return macros;
-    // }
-
     List<string> GetIncludedFile() {
         List<string> includedFiles = new List<string>();
         List<int> include_lines = new List<int>();
@@ -418,13 +334,27 @@ public class Assembler : MonoBehaviour
     }
 
     void parseCode() {
-        update_finalCode();
         for(int i=0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
             string[] temp = Regex.Split(ln, @" |,");
             string instruction = temp[0];
             if(temp[0][0] == '.') {
                     continue;
+            }
+
+            if(temp[0][0] == '`') {
+                ushort address = 0;
+                if(temp[1][0].ToString() == "#") {
+                    address = evaluate(temp[1][1..], i).Item1;
+                } else {
+                    address = evaluate(temp[1], i).Item1;
+                }
+                int currentCodeIndex = code.Count;
+                for(int j=0; j < address-currentCodeIndex; j++) {
+                    code.Add(0);
+                }
+
+                continue;
             }
 
             if(temp.Length > 1) {
@@ -436,8 +366,8 @@ public class Assembler : MonoBehaviour
                 }
                 else {
                     ushort opCode = 0;
-                    ushort CalAddress = 0;
-                    if(temp.Length > 3) {
+                    ushort CalAddress;
+                    if (temp.Length > 3) {
                         //operand include [] and registors
                         if(temp[3][temp[3].Length - 1] == ']') {
                             //operand is like - [address, X] or [address, Y]
@@ -481,7 +411,7 @@ public class Assembler : MonoBehaviour
                         CalAddress = result.Item1;
                         if(result.Item2) {
                             //if the variable is a constant
-                            opCode = (ushort)instructions[instruction];
+                            opCode = instructions[instruction];
                         }
                         else {
                             opCode = (ushort)(instructions[instruction] + 1);
@@ -633,7 +563,11 @@ public class Assembler : MonoBehaviour
         StreamWriter stm = new StreamWriter(ALProgramFilePath[0..^3] + "txt");
         string ln = "";
         for(int i=0; i < code.Count; i++) {
+            // string _byte = "";
+            // if(i < 512) _byte = "0000 ";
+            // else _byte = code[i-512].ToString("X4") + " ";
             string _byte = code[i].ToString("X4") + " ";
+            
             ln += _byte;
             if((i+1) % 8 == 0 || i == code.Count - 1) {
                 stm.WriteLine(ln.Trim());

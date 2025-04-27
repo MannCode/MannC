@@ -2,15 +2,14 @@
 .offset
 
 intialize:
-	LDA #$7000
+	LDA #$7240
 	STA offset
 
 	LDA #$0001
 	STA whiteColor
 
 loop: ; 8
-	JSR 
-	start
+	JSR start
 	JSR inc
 	JMP loop
 

@@ -1,0 +1,77 @@
+0: Black
+1: 5x5 Square (Up)
+2: 5x6 Square
+3: 7x8 Square
+4: 2x6 Line (Left)
+5: 2x6 Line (Right)
+6: 3x6 Line (Middle)
+7: 1x6 Line (Middle)
+8: 1x6 Line (Left)
+9: 1x6 Line (Right)
+
+10: 0
+11: 1
+12: 2
+13: 3
+14: 4
+15: 5
+16: 6
+17: 7
+18: 8
+19: 9
+
+20: 5x1 Line (Up)
+21: 5x1 Line (Down)
+22: 5x2 Line (Up)
+23: 5x2 Line (Middle)
+24: 5x2 Line (Down)
+25: 5x5 Square (Down)
+26: Dotted line vertical (Middle)
+27: 5x1 Line (Middle)
+28: Dotted Line Horizontal (1)
+29: Dotted Line Horizontal (2)
+30: 7x1 Line (Up)
+31: 7x1 Line (Down)
+32: 7x2 Line (Up)
+33: 7x2 Line (Middle)
+34: 7x2 Line (Down)
+35: 7x5 Square (Down)
+36: 1x8 Line (Left)
+37: 1x8 Line (Right)
+38: 2x8 Line (Left)
+39: 2x8 Line (Right)
+40: 2x8 Line (Middle)
+41: 7x1 Line (Middle)
+
+42: A
+43: B
+44: C
+45: D
+46: E
+47: F
+48: G
+49: H
+50: I
+51: J
+52: K
+53: L
+54: M
+55: N
+56: O
+57: P
+58: Q
+59: R
+60: S
+61: T
+62: U
+63: V
+64: W
+65: X
+66: Y
+67: Z
+
+68: 1x1 Square (Top Left)
+69: 2x2 Square (Top Left)
+70: 3x3 Square (Top Left)
+71: 4x4 Square (Top Left)
+

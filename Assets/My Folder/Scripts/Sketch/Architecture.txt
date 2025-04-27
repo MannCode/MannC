@@ -174,12 +174,19 @@ Y : 2-byte Memory Address [imm16/HL] (Some instruction use 8 bit address and som
 
 example : JMP 03 -> 0110 0011 -> 01100011
 
-===== Memory Layout =====
+===== Memory Layout (Pixel Wise VRAM) =====
 Total - 0xFFFF * 0x2 = 128 KB
-0x0000 - 0x6EFF -> RAM (54 KB)
-0x6F00 - 0x6FFE -> Stack (510 Bytes)
-0x6FFF - 0x6FFF -> OUTPUT (2 Byte)
+0x0000 - 0x6DFF -> General RAM (55 KB)
+0x6E00 - 0x6EFF -> Stack (512 Bytes)
+0x6F00 - 0x6FFF -> I/O (512 Bytes)
 0x7000 - 0xFFFF -> VRAM (72 KB)
+
+Macro Variable Storage -> 0x1FCE - 0x1FFF
+Variable Storage -> 0x2000 - 0x2FFF
+Intrupt Start -> 0x3000
+
+for Bitmap
+0x7000 - 0x7288
 
 ===== Micro Code =====
 HLT: Halt
