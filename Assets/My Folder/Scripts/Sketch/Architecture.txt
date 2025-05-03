@@ -188,6 +188,10 @@ Intrupt Start -> 0x3000
 for Bitmap
 0x7000 - 0x7288
 
+===== Screen Size =====
+pixel - 256x144
+bitmap - 36x18
+
 ===== Micro Code =====
 HLT: Halt
 MI: Memory In

@@ -30,7 +30,7 @@ public class ScreenRenderer : MonoBehaviour
     public int bitmapWidth = 7;
     public int bitmapHeight = 8;
 
-    public string bitmapFilePath = "/Users/mandeepsingh/MyStuff/Programming/Python/Screen_Pixelart_Converter/BitMap_bin.bin";
+    public string bitmapFilePath = "../BitMapGenerator/BitMap_bin.bin";
     
     public int[][][] bitmap;
 

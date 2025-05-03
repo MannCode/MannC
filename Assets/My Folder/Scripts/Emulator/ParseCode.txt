@@ -1,25 +1,152 @@
-.val   2000
-.index   2001
+.line   2000
+.col   2001
+.indexStart   2002
+.line_length = 36
+.val   2003
+start:
     0000  LDA #42
     0002  STA val
-start:
     0004  LDA #$7000
-    0006  STA index
-    0008  LDX #68
-    000A  LDY #$7288
-loop:
-    000C  LDA val
-    000E  STA [index], 0
-    0010  INC val
-    0012  CPX val
-    0014  BEQ reset
-loopC:
-    0016  DUP
-    0017  INC index
-    0019  CPY index
-    001B  BEQ start
-    001D  JMP loop
-reset:
-    001F  LDA #42
-    0021  STA val
-    0023  JMP loopC
+    0006  STA indexStart
+    0008  LDA #51
+    000A  STA $1FCE
+    000C  JSR add_char
+    000E  LDA #42
+    0010  STA $1FCE
+    0012  JSR add_char
+    0014  LDA #66
+    0016  STA $1FCE
+    0018  JSR add_char
+    001A  LDA #42
+    001C  STA $1FCE
+    001E  JSR add_char
+    0020  LDA #55
+    0022  STA $1FCE
+    0024  JSR add_char
+    0026  LDA #60
+    0028  STA $1FCE
+    002A  JSR add_char
+    002C  LDA #49
+    002E  STA $1FCE
+    0030  JSR add_char
+    0032  LDA #0
+    0034  STA $1FCE
+    0036  JSR add_char
+    0038  LDA #50
+    003A  STA $1FCE
+    003C  JSR add_char
+    003E  LDA #60
+    0040  STA $1FCE
+    0042  JSR add_char
+    0044  LDA #0
+    0046  STA $1FCE
+    0048  JSR add_char
+    004A  LDA #42
+    004C  STA $1FCE
+    004E  JSR add_char
+    0050  LDA #0
+    0052  STA $1FCE
+    0054  JSR add_char
+    0056  LDA #47
+    0058  STA $1FCE
+    005A  JSR add_char
+    005C  LDA #62
+    005E  STA $1FCE
+    0060  JSR add_char
+    0062  LDA #44
+    0064  STA $1FCE
+    0066  JSR add_char
+    0068  LDA #52
+    006A  STA $1FCE
+    006C  JSR add_char
+    006E  LDA #50
+    0070  STA $1FCE
+    0072  JSR add_char
+    0074  LDA #55
+    0076  STA $1FCE
+    0078  JSR add_char
+    007A  LDA #48
+    007C  STA $1FCE
+    007E  JSR add_char
+    0080  LDA #0
+    0082  STA $1FCE
+    0084  JSR add_char
+    0086  LDA #57
+    0088  STA $1FCE
+    008A  JSR add_char
+    008C  LDA #50
+    008E  STA $1FCE
+    0090  JSR add_char
+    0092  LDA #46
+    0094  STA $1FCE
+    0096  JSR add_char
+    0098  LDA #44
+    009A  STA $1FCE
+    009C  JSR add_char
+    009E  LDA #46
+    00A0  STA $1FCE
+    00A2  JSR add_char
+    00A4  LDA #0
+    00A6  STA $1FCE
+    00A8  JSR add_char
+    00AA  LDA #56
+    00AC  STA $1FCE
+    00AE  JSR add_char
+    00B0  LDA #47
+    00B2  STA $1FCE
+    00B4  JSR add_char
+    00B6  LDA #0
+    00B8  STA $1FCE
+    00BA  JSR add_char
+    00BC  LDA #60
+    00BE  STA $1FCE
+    00C0  JSR add_char
+    00C2  LDA #49
+    00C4  STA $1FCE
+    00C6  JSR add_char
+    00C8  LDA #50
+    00CA  STA $1FCE
+    00CC  JSR add_char
+    00CE  LDA #61
+    00D0  STA $1FCE
+    00D2  JSR add_char
+    00D4  HLT
+add_char:
+.index   2004
+    00D5  LDA $1FCE
+    00D7  PHA
+    00D8  LDA #(line_length)
+    00DA  STA $1FCE
+    00DC  LDA line
+    00DE  STA $1FCF
+    00E0  JSR mul
+    00E2  ADD col
+    00E4  ADD indexStart
+    00E6  STA index
+    00E8  PLA
+    00E9  STA [index], 0
+    00EB  DUP
+    00EC  LDA col
+    00EE  SUB #(line_length)
+    00F0  BEQ else
+    00F2  INC col
+    00F4  JMP end
+else:
+    00F6  JSR new_line
+end:
+    00F8  RTS
+new_line:
+    00F9  LDA #0
+    00FB  STA col
+    00FD  INC line
+    00FF  RTS
+mul:
+    0100  LDA #0
+loop_mul:
+    0102  LDX $1FCF
+    0104  BEQ end_mul
+    0106  ADD $1FCE
+    0108  DEC $1FCF
+    010A  JMP loop_mul
+end_mul:
+    010C  RTS

@@ -122,9 +122,10 @@ public class Assembler : MonoBehaviour
         //GetuShortsPerLine
         getuShortsPerLine();
     
-        update_finalCode();
         // //parse the code
         parseCode();
+
+        update_finalCode();
 
         // //sabe the code in a file
         saveCode();
