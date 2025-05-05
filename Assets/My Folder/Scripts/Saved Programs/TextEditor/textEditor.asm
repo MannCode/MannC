@@ -5,46 +5,27 @@
 .val
 
 start:
-    LDA #42
+    LDA #20
     STA val
     LDA #$7000
     STA indexStart
 
-    @add_char #51
-    @add_char #42
-    @add_char #66
-    @add_char #42
-    @add_char #55
-    @add_char #60
-    @add_char #49
-    @add_char #0
-    @add_char #50
-    @add_char #60
-    @add_char #0
-    @add_char #42
-    @add_char #0
-    @add_char #47
-    @add_char #62
-    @add_char #44
-    @add_char #52
-    @add_char #50
-    @add_char #55
-    @add_char #48
-    @add_char #0
-    @add_char #57
-    @add_char #50
-    @add_char #46
-    @add_char #44
-    @add_char #46
-    @add_char #0
-    @add_char #56
-    @add_char #47
-    @add_char #0
-    @add_char #60
-    @add_char #49
-    @add_char #50
-    @add_char #61
-    HLT
+loop:
+    @add_char val
+    LDX line
+    CPX #18
+    BEQ reset_line
+    JMP loop
+
+reset_line:
+    LDA #0
+    STA line
+    INC val
+    LDA val
+    CMP #41
+    BEQ start
+    CLS
+    JMP loop
 
 ~add_char 1 {
 .index
@@ -56,11 +37,11 @@ start:
     STA index
     PLA
     STA [index], 0
-    DUP
     LDA col
     SUB #(line_length)
     BEQ else
     INC col
+    DUP
     JMP end
 else:
     JSR new_line
@@ -68,21 +49,32 @@ end:
 }
 
 new_line:
+    INC line
     LDA #0
     STA col
-    INC line
     RTS
-
-
 
 ~mul 2 {
 ; A, B
     LDA #0
 loop_mul:
+    ADD ^1
     LDX ^2
     BEQ end_mul
-    ADD ^1
     DEC ^2
     JMP loop_mul
 end_mul:
 }
+
+intrupt:
+    PHA
+    LDA $1FCF
+    PHA
+    @add_char #3
+    PLA
+    STA $1FCF
+    PLA
+    RTS
+
+` $3000
+    JMP intrupt

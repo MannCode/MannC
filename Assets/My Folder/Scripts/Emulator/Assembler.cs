@@ -86,8 +86,8 @@ public class Assembler : MonoBehaviour
         {"BCS", 0x0084},
         {"BNE", 0x0088},
         {"BEQ", 0x008C},
-        {"SLA", 0x00A0},
-        {"SRA", 0x00A4},
+        {"SLA", 0x00AC},
+        {"SRA", 0x00B0},
         {"CLS", 0xFFFD},
         {"DUP", 0xFFFE},
         {"HLT", 0xFFFF}
@@ -179,7 +179,7 @@ public class Assembler : MonoBehaviour
                 //manuplate the code
                 newCode[i] = macroName + ":";
 
-                ushort startArgumentAddress = 0x1FCE; // 0x2000 - 50 (for max of 50 arguments)
+                ushort startArgumentAddress = 0x6DE0; //(max - 15 arguments)
                 // int temp_i = i;
                 while (!code[i+1].Contains("}")) {
                     i++;
@@ -213,9 +213,15 @@ public class Assembler : MonoBehaviour
                             ParseCode.RemoveAt(i);
                             string[] arguments = words[1..];
 
+                            if (arguments.Length > 15) {
+                                error("Too many arguments for macro: " + words[0][1..]);
+                                // stop everything
+                                return;
+                            }
+
                             for(int j=0; j < arguments.Length; j++) {
                                 ParseCode.Insert(i, "LDA " + arguments[j]);
-                                ParseCode.Insert(i+1, "STA $" + (0x1FCE + j).ToString("X4"));
+                                ParseCode.Insert(i+1, "STA $" + (0x6DE0 + j).ToString("X4"));
                                 i+=2;
                             }
 
@@ -267,7 +273,7 @@ public class Assembler : MonoBehaviour
         var lableIndices = new List<int>();
         int instructionIndex = 0;
         var variableCount = 0;
-        var variableStartindex = 8192;
+        var variableStartindex = 0x5A00;
         for(int i = 0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
             //check for variables
@@ -281,6 +287,11 @@ public class Assembler : MonoBehaviour
                 else {
                     varValue = (variableCount + variableStartindex).ToString();
                     variableCount++;
+
+                    if(variableCount > 5087) {
+                        error("Too many variables");
+                        return;
+                    }
                 }
                 Variable var = new Variable(i, varName, varValue);
                 variables.Add(var);
@@ -358,6 +369,16 @@ public class Assembler : MonoBehaviour
                 continue;
             }
 
+            if(temp[0][0] == ':') {
+                //its a direct memory code to store shorts directly inside memory
+                for(int j=1; j < temp.Length; j++) {
+                    ushort val = getDecimalVal(temp[j]);
+                    code.Add(val);
+                }
+
+                continue;
+            }
+
             if(temp.Length > 1) {
                 if(temp[1][0].ToString() == "#") {
                     // if operand is like - #value
@@ -399,6 +420,23 @@ public class Assembler : MonoBehaviour
                             else if (instruction == "STY") {
                                 if(registor == '0') opCode = 0x9C;
                                 else if(registor == 'X' || registor == 'x') opCode = 0x9D;
+                                else error("Invalid Registor");
+                            }
+
+                            else if(instruction == "LDA") {
+                                if(registor == '0') opCode = 0xA0;
+                                else if(registor == 'X' || registor == 'x') opCode = 0xA1;
+                                else if(registor == 'Y' || registor == 'y') opCode = 0xA2;
+                                else error("Invalid Registor");
+                            }
+                            else if (instruction == "LDX") {
+                                if(registor == '0') opCode = 0xA4;
+                                else if(registor == 'Y' || registor == 'y') opCode = 0xA5;
+                                else error("Invalid Registor");
+                            }
+                            else if (instruction == "LDY") {
+                                if(registor == '0') opCode = 0xA8;
+                                else if(registor == 'X' || registor == 'x') opCode = 0xA9;
                                 else error("Invalid Registor");
                             }
                             else error("Invalid Instruction for indirect command");
@@ -507,6 +545,12 @@ public class Assembler : MonoBehaviour
                 }
                 // print(_token);
                 // print(matchedVar);
+                if(token == "pppp") 
+                {
+
+
+                }
+
                 if(nearestValue != "") {
                     if(nearestValue[0] == '#') {
                         isConstantVariable = true;
@@ -563,17 +607,23 @@ public class Assembler : MonoBehaviour
     void saveCode() {
         StreamWriter stm = new StreamWriter(ALProgramFilePath[0..^3] + "txt");
         string ln = "";
+        ushort line_start_address = 0x0000;
         for(int i=0; i < code.Count; i++) {
-            // string _byte = "";
-            // if(i < 512) _byte = "0000 ";
-            // else _byte = code[i-512].ToString("X4") + " ";
+            //check for the end of the line
             string _byte = code[i].ToString("X4") + " ";
             
             ln += _byte;
+
             if((i+1) % 8 == 0 || i == code.Count - 1) {
+                ln = line_start_address.ToString("X4") + ": " + ln.Trim();
                 stm.WriteLine(ln.Trim());
                 ln = "";
+                line_start_address += 8;
             }
+            // if(i == code.Count - 1) {
+            //     stm.WriteLine(ln.Trim());
+            //     ln = "";
+            // }
         }
         stm.Close();
 

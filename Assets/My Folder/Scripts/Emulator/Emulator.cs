@@ -131,7 +131,7 @@ public class Emulator : MonoBehaviour
                 Resent_Inrupt = true;
                 // Switch to the intrupt address
                 PushStackShort(mem, PC);
-                PC = 0x3000;   
+                PC = 0x6DF0;
             }
             if(Input.GetKeyUp(KeyCode.A)) {
                 Resent_Inrupt = false;
@@ -200,6 +200,43 @@ public class Emulator : MonoBehaviour
                     Y = readShort(mem, address);
                     updateFlag(Y);
                     break;
+                case 0xA0: //LDA (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    A = readShort(mem, address);
+                    break;
+                case 0xA1: //LDA (indirect),X
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    A = readShort(mem, (ushort)(address+X));
+                    break;
+                case 0xA2: //LDA (indirect),Y
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    A = readShort(mem, (ushort)(address+Y));
+                    break;
+                case 0xA4: //LDX (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    X = readShort(mem, address);
+                    break;
+                case 0xA5: //LDX (indirect),Y
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    X = readShort(mem, (ushort)(address+Y));
+                    break;
+                case 0xA8: //LDY (indirect), 0
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    Y = readShort(mem, address);
+                    break;
+                case 0xA9: //LDY (indirect),X
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    Y = readShort(mem, (ushort)(address+X));
+                    break;
+
+
                 case 0x11: //STA address
                     address = fetchShort(mem);
                     writeShort(mem, address, A);
@@ -593,12 +630,12 @@ public class Emulator : MonoBehaviour
                     address = fetchShort(mem);
                     if(F_Z) PC = address;
                     break;
-                case 0xA0: //SLA
+                case 0xAC: //SLA
                     val = fetchShort(mem);
                     A = (ushort)(A << val);
                     updateFlag(A);
                     break;
-                case 0xA4: //SRA
+                case 0xB0: //SRA
                     val = fetchShort(mem);
                     A = (ushort)(A >> val);
                     updateFlag(A);

@@ -126,7 +126,7 @@ $ - Hexadecimal Number
 %100010XX:$89: BNE -> "if zero flag clear"
 %100011XX:$8D: BEQ -> "if zero flag set"
 
-== STA, STX, STY (Continuing) ==
+== STA, STX, STY, LDA, LDX, LDY (Continuing) ==
 %100101XX: STA :
     %00 : $94 : "[Indirect], 0"
     %01 : $95 : "[Indirect], X"
@@ -138,11 +138,22 @@ $ - Hexadecimal Number
     %00 : $9C : "[Indirect], 0"
     %01 : $9D : "[Indirect], X"
 
+%101000XX: LDA :
+    %00 : $A0 : "[Indirect], 0"
+    %01 : $A1 : "[Indirect], X"
+    %10 : $A2 : "[Indirect], Y"
+%101001XX: LDX :
+    %00 : $A4 : "[Indirect], 0"
+    %01 : $A5 : "[Indirect], Y"
+%101010XX: LDY :
+    %00 : $A8 : "[Indirect], 0"
+    %01 : $A9 : "[Indirect], X"
+
 == Bitwise Shift ==
-%101000XX: SLA :
-    %00 : $A0 : "Imidiate"
-%101001XX: SRA :
-    %00 : $A4 : "Imitidate"
+%101011XX: SLA :
+    %00 : $AC : "Imidiate"
+%101100XX: SRA :
+    %00 : $B0 : "Imitidate"
 
 == CLEAR Screen ==
 $FFFD: CLS -> "CLEAR screen:
@@ -181,9 +192,10 @@ Total - 0xFFFF * 0x2 = 128 KB
 0x6F00 - 0x6FFF -> I/O (512 Bytes)
 0x7000 - 0xFFFF -> VRAM (72 KB)
 
-Macro Variable Storage -> 0x1FCE - 0x1FFF
-Variable Storage -> 0x2000 - 0x2FFF
-Intrupt Start -> 0x3000
+
+Variable Storage -> 0x5A00 - 0x6DDF (5087)
+Macro Variable Storage -> 0x6DE0 - 0x6DEF (15)
+Intrupt Start -> 0x6DF0 - 0x6DFF (15)
 
 for Bitmap
 0x7000 - 0x7288

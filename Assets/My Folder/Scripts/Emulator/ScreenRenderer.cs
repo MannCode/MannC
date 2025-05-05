@@ -125,8 +125,13 @@ public class ScreenRenderer : MonoBehaviour
                 int bitmapIndex = mem.Data[index];
                 for(int y=0; y < bitmapHeight; y++) {
                     for(int x=0; x < bitmapWidth; x++) {
+                        try {
                         int val = bitmap[bitmapIndex][y][x];
                         texture.SetPixel((b_x*bitmapWidth) + x, (b_y*bitmapHeight) + bitmapHeight-y-1, (val == 1) ? new Color(0.0003f, 1.0f, 0.121f, 1.0f) : Color.black);
+                        } catch (Exception e) {
+                            Debug.Log("bitmapIndex: " + bitmapIndex + " y: " + y + " x: " + x);
+                            Debug.Log(e);
+                        }
                     }
                 }
                 index += 1;
