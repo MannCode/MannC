@@ -3086,8 +3086,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   emulator: {fileID: 982881736}
-  ALProgramFilePath: /Users/mandeepsingh/MyStuff/Programming/Unity/Projects/MannC/Assets/My
-    Folder/Scripts/Saved Programs/DisplayVideo/DisplayVideo.asm
+  MasmFilePath: Assets/My Folder/Scripts/AssemblyScripts/TestPrograms/TestScreenBlink.asm
   Finalcode: 
   ParseCode: []
   code: 
@@ -7133,6 +7132,7 @@ GameObject:
   m_Component:
   - component: {fileID: 982881737}
   - component: {fileID: 982881736}
+  - component: {fileID: 982881738}
   m_Layer: 0
   m_Name: Emulator
   m_TagString: Untagged
@@ -7181,6 +7181,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &982881738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982881735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 77d68c9546b2f46da87275cdfcf74782, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!1 &998551864
 GameObject:
   m_ObjectHideFlags: 0

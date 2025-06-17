@@ -75,3 +75,7 @@
 70: 3x3 Square (Top Left)
 71: 4x4 Square (Top Left)
 
+72: Space Character
+
+$FE: return
+$FF: Backspace

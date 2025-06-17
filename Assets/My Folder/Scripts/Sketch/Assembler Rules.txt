@@ -1,17 +1,14 @@
 =======================================================
-                # MANN-8Bit-Assembler #
+                # MANN-16Bit-Assembler #
 =======================================================
 
 
 ====== Instruction Format ======
 
-* First byte is opcode (XXXXXXYY) - X is instruction | and Y is its instances
-* If opcode Takes address :-
-    * Second and third byte is address
-  If opcode takes data :-
-    * Second byte is data
-  If opcode takes nothing :-
-    * No extra bytes needed
+* First short is opcode (0xXX %XXXXXXYY) - X is instruction | and Y is its instances
+* Seccond short is the address or data
+* If opcode takes nothing :-
+    * No extra short needed
 
 ==== How instruction is written ====
 
@@ -19,9 +16,9 @@
     * [space/tab]+Instruction
 * if instruction takes data/address
     * [space/tab]+Instruction+[Space]+[if imidiate]+[value]
-        * example - LDA ($00, X)
+        * example - LDA ($0000, X)
 
-^ Instruction - It defines the XXXXXX in the opcode (1st byte)
+^ Instruction - It defines the 0xXXXX in the opcode (1st short)
 ^ if imidiate - It defines the opcode takes data or address (denoted by "#" or "")
 ^ [value] - It defines the YY in the opcode and the value of data/address (2 and 3 byte) according to the instruction
     * all the value types are:
@@ -73,6 +70,14 @@ $ - Hexadecimal number
 
 * some operators are :-
     +,-,*,/
+
+======= .org ======
+
+* To start a next part of code starting from a perticualar address :-
+    - we use (  ` [address])
+
+====== assign direct short to a location ========
+* use ( : [byte])
 
 
 == @macros ==

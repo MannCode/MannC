@@ -1,0 +1,110 @@
+.line   2000
+.col   2001
+.index   2002
+.indexStart = $7000
+.actual_index   2003
+.line_length = 36
+.pix_length = 648
+.val   2004
+.cursor_val = 4
+.show_cursor   2005
+.cursor_wait   2006
+.return_key = $FE
+.backspace_key = $FF
+start:
+    0000  LDA #0
+    0002  STA val
+    0004  LDA #10000
+    0006  STA cursor_wait
+loop:
+    0008  LDX cursor_wait
+cursor_loop:
+    000A  DEX
+    000B  BNE cursor_loop
+    000D  LDA show_cursor
+    000F  BEQ set_cursor_one
+    0011  DEC show_cursor
+    0013  LDA #0
+    0015  STA $6DE0
+    0017  JSR set_char
+    0019  JMP set_cursor_end
+set_cursor_one:
+    001B  INC show_cursor
+    001D  LDA #4
+    001F  STA $6DE0
+    0021  JSR set_char
+set_cursor_end:
+    0023  JMP loop
+set_char:
+    0025  LDA index
+    0027  ADD #(indexStart)
+    0029  STA actual_index
+    002B  LDA $6DE0
+    002D  STA [actual_index], 0
+    002F  DUP
+    0030  RTS
+new_line:
+.mod_val   2007
+    0031  PHA
+    0032  LDA index
+    0034  STA $6DE0
+    0036  LDA #(line_length)
+    0038  STA $6DE1
+    003A  JSR mod
+    003C  STA mod_val
+    003E  LDA #(line_length)
+    0040  SUB mod_val
+    0042  ADD index
+    0044  STA index
+    0046  CMP #(pix_length)
+    0048  BNE check_pix_end
+    004A  LDA #0
+    004C  STA index
+    004E  CLS
+check_pix_end:
+    004F  PLA
+    0050  RTS
+mod:
+    0051  LDA $6DE0
+mod_loop:
+    0053  CMP $6DE1
+    0055  BCC break_mod
+    0057  SUB $6DE1
+    0059  JMP mod_loop
+break_mod:
+    005B  RTS
+return:
+    005C  LDA #0
+    005E  STA $6DE0
+    0060  JSR set_char
+    0062  JSR new_line
+    0064  JMP intrupt_end
+backspace:
+    0066  LDA #0
+    0068  STA $6DE0
+    006A  JSR set_char
+    006C  DEC index
+    006E  LDA #0
+    0070  STA $6DE0
+    0072  JSR set_char
+    0074  JMP intrupt_end
+intrupt:
+    0076  LDA $6F00
+    0078  STA val
+    007A  TXA
+    007B  PHA
+    007C  LDA val
+    007E  CMP #(return_key)
+    0080  BEQ return
+    0082  CMP #(backspace_key)
+    0084  BEQ backspace
+    0086  LDA val
+    0088  STA $6DE0
+    008A  JSR set_char
+    008C  INC index
+intrupt_end:
+    008E  PLA
+    008F  TAX
+    0090  RTS
+    0091  ` $6DF0
+    0093  JMP intrupt
