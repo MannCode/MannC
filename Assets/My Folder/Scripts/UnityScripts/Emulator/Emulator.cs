@@ -215,13 +215,10 @@ public class Emulator : MonoBehaviour
 
 
         public void execute(CPU cpu, MEM mem, MEM mem_Backup, ScreenRenderer sc,ref bool intrupt) {
-            //check interrupt
-
-            // checkInterrupt(mem);
             if (intrupt)
             {
                 intrupt = false;
-                print("INT detected");
+                // print("INT detected");
                 PushStackShort(mem, PC);
                 PC = 0x6DF0; // Address of the interrupt handler
             }

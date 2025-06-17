@@ -1,0 +1,14 @@
+.line   2000
+.col   2001
+start:
+    0000  LDA #50
+    0002  STA line
+    0004  LDA #10
+    0006  STA col
+.inc   2002
+    0008  LDA #1
+    000A  STA inc
+loop:
+    000C  LDX inc
+    000E  INC inc
+    0010  JMP loop

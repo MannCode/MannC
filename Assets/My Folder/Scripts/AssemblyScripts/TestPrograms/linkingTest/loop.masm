@@ -1,0 +1,8 @@
+.inc
+
+    LDA #1
+    STA inc
+loop:
+    LDX inc
+    INC inc
+    JMP loop

@@ -108,18 +108,21 @@ public class Assembler : MonoBehaviour
     {
         //initializing filename and directory
         string filename = Path.GetFileName(MasmFilePath)[0..^5]; // remove .masm extension
+        // extract directory path from MasmFilePath
+        string directoryPath = MasmFilePath[..(MasmFilePath.LastIndexOf('/')+1)];
+        Debug.Log("Directory Path: " + directoryPath);
         createExportDirectory(filename);
         
 
         //store each line of the file in an array
-        ParseCode = readFile(MasmFilePath);
-
+        ParseCode = readFile(filename + ".masm", directoryPath);
+        exportParseCode(filename);
         
         //Replace ~macros like actual code
         ParseCode = ReplaceMacrosFunctions(ParseCode);
         ReplaceMacrosDecleration();
 
-        exportParseCode(filename);
+       
 
 
         // Extract variable, lables with wrong address (line number)
@@ -139,8 +142,8 @@ public class Assembler : MonoBehaviour
         exportCode(filename, true);
     }
 
-    List<string> readFile(string file) {
-        StreamReader stm = new StreamReader(file);
+    List<string> readFile(string file, string directoryPath) {
+        StreamReader stm = new StreamReader(directoryPath + file);
         List<string> code = new List<string>();
 
         while(!stm.EndOfStream) {
@@ -160,6 +163,14 @@ public class Assembler : MonoBehaviour
 
             //check for blank lines
             if(ln == "") {
+                continue;
+            }
+            
+            if (ln.Split(' ')[0] == "#link")
+            {
+                string linkpath = ln.Split(' ')[1][1..^1];
+                List<string> file_parseCode = readFile(linkpath, directoryPath);
+                code.AddRange(file_parseCode);
                 continue;
             }
 

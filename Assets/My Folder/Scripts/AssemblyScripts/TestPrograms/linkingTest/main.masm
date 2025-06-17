@@ -1,0 +1,10 @@
+.line
+.col
+
+start:
+    LDA #50
+    STA line
+    LDA #10
+    STA col
+
+#link "loop.masm"
