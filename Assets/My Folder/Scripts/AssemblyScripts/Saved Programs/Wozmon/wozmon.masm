@@ -1,0 +1,85 @@
+; Variables initialization
+
+; 0 page variables (not in my case)
+.MODE               ; $00=XAM, $7F=STOR, $AE=BLOCK XAM
+
+; other variables
+.IN = $5000         ; Inputer buffer to 527F
+.KBD                ; Keyboard input
+.KBDCR              ; keyboard control register
+
+; my variable
+.A_temp             ; temp for A resister
+
+; main program
+RESET:
+    CLS
+    LDY #$FFFF
+NOTCR:
+    CMP #$FF
+    BEQ BACKSPACE
+    CMP #$FD
+    BEQ ESCAPE
+    INY
+    BCC NEXTCHAR    ; Auto ESC if OFB
+ESCAPE:
+    LDA #42       ; print "A"
+    JSR ECHO
+GETLINE:
+    LDA #$FE
+    JSR ECHO
+    LDY #1
+BACKSPACE:
+    DEY
+    BCS GETLINE
+NEXTCHAR:
+    LDA KBDCR
+    BEQ NEXTCHAR    ; wait for key press
+    DEC KBDCR       ; reseting KBDCR to 0
+    LDA KBD
+    STA [IN, Y]     ; Add input to text buffer
+    JSR ECHO        ; display character
+    CMP #$FE        ; CR?
+    BNE NOTCR       ; No.
+
+    LDY #$FF
+    LDA #$00
+    TAX
+SETSTOR:
+    SLA             ; Leaves $94 if STOR mode
+SETMODE:
+    STA MODE        ; $00=XAM, $94=STOR, $48=BLOCK XAM 
+BLSKIP:
+    INY             ; INC text index
+NEXTITEM:
+    LDA [IN, Y]     ; Get character
+    CMP #$FE        ; CR?
+    BEQ GETLINE     ; Yes, done this line.
+    CMP #$48        ; "."?
+    BCC BLSKIP      ; Skip delimiter
+    BEQ SETMODE     ; Set BLOCK XAM mode
+    CMP #$4A        ; ":"?
+    BEQ SETSTOR     ; store mode
+    BEQ #$3B        ; "R"?
+    BEQ RUN         ; Run user program
+
+
+
+
+
+    JMP NEXTCHAR
+
+
+ECHO:
+; This code display the character
+    STA A_temp
+    @print_char A_temp
+    RTS
+
+
+intrupt:
+    LDA #1
+    STA KBDCR
+    LDA $6F00
+    STA KBD
+    RTS

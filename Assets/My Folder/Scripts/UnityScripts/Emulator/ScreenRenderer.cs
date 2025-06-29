@@ -30,21 +30,21 @@ public class ScreenRenderer : MonoBehaviour
     public int bitmapWidth = 7;
     public int bitmapHeight = 8;
 
-    public string bitmapFilePath = "../BitMapGenerator/BitMap_bin.bin";
+    public string bitmapFilePath; //"../BitMapGenerator/Bitmap_bin.bin";
     
     public int[][][] bitmap;
 
     // all 0
-    public int[][] bitmap1 = new int[8][] {
-        new int[7]{0,1,1,1,0,0,0},
-        new int[7]{1,0,0,0,1,0,0},
-        new int[7]{1,0,0,0,1,0,0},
-        new int[7]{1,1,1,1,1,0,0},
-        new int[7]{1,0,0,0,1,0,0},
-        new int[7]{1,0,0,0,1,0,0},
-        new int[7]{0,0,0,0,0,0,0},
-        new int[7]{0,0,0,0,0,0,0}
-    };
+    // public int[][] bitmap1 = new int[8][] {
+    //     new int[7]{0,1,1,1,0,0,0},
+    //     new int[7]{1,0,0,0,1,0,0},
+    //     new int[7]{1,0,0,0,1,0,0},
+    //     new int[7]{1,1,1,1,1,0,0},
+    //     new int[7]{1,0,0,0,1,0,0},
+    //     new int[7]{1,0,0,0,1,0,0},
+    //     new int[7]{0,0,0,0,0,0,0},
+    //     new int[7]{0,0,0,0,0,0,0}
+    // };
 
     // Start is called before the first frame update
     public void Start()

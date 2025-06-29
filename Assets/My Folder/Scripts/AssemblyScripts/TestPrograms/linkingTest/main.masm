@@ -7,4 +7,4 @@ start:
     LDA #10
     STA col
 
-#link "loop.masm"
+#link "loop"

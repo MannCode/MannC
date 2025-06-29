@@ -24,87 +24,71 @@ cursor_loop:
     000D  LDA show_cursor
     000F  BEQ set_cursor_one
     0011  DEC show_cursor
-    0013  LDA #0
-    0015  STA $6DE0
-    0017  JSR set_char
-    0019  JMP set_cursor_end
+    0013  @set_char #0
+    0015  JMP set_cursor_end
 set_cursor_one:
-    001B  INC show_cursor
-    001D  LDA #4
-    001F  STA $6DE0
-    0021  JSR set_char
+    0017  INC show_cursor
+    0019  @set_char #4
 set_cursor_end:
-    0023  JMP loop
-set_char:
-    0025  LDA index
-    0027  ADD #(indexStart)
-    0029  STA actual_index
-    002B  LDA $6DE0
-    002D  STA [actual_index], 0
-    002F  DUP
-    0030  RTS
+    001B  JMP loop
+    001D  ~set_char 1 {
+    001F  LDA index
+    0021  ADD #(indexStart)
+    0023  STA actual_index
+    0025  LDA ^1
+    0027  STA [actual_index], 0
+    0029  DUP
+    002A  }
 new_line:
 .mod_val   2007
-    0031  PHA
-    0032  LDA index
-    0034  STA $6DE0
-    0036  LDA #(line_length)
-    0038  STA $6DE1
-    003A  JSR mod
-    003C  STA mod_val
-    003E  LDA #(line_length)
-    0040  SUB mod_val
-    0042  ADD index
-    0044  STA index
-    0046  CMP #(pix_length)
-    0048  BNE check_pix_end
-    004A  LDA #0
-    004C  STA index
-    004E  CLS
+    002B  PHA
+    002C  @mod index #(line_length)
+    002E  STA mod_val
+    0030  LDA #(line_length)
+    0032  SUB mod_val
+    0034  ADD index
+    0036  STA index
+    0038  CMP #(pix_length)
+    003A  BNE check_pix_end
+    003C  LDA #0
+    003E  STA index
+    0040  CLS
 check_pix_end:
-    004F  PLA
-    0050  RTS
-mod:
-    0051  LDA $6DE0
+    0041  PLA
+    0042  RTS
+    0043  ~mod 2 {
+    0045  LDA ^1
 mod_loop:
-    0053  CMP $6DE1
-    0055  BCC break_mod
-    0057  SUB $6DE1
-    0059  JMP mod_loop
+    0047  CMP ^2
+    0049  BCC break_mod
+    004B  SUB ^2
+    004D  JMP mod_loop
 break_mod:
-    005B  RTS
+    004F  }
 return:
-    005C  LDA #0
-    005E  STA $6DE0
-    0060  JSR set_char
-    0062  JSR new_line
-    0064  JMP intrupt_end
+    0050  @set_char #0
+    0052  JSR new_line
+    0054  JMP intrupt_end
 backspace:
-    0066  LDA #0
-    0068  STA $6DE0
-    006A  JSR set_char
-    006C  DEC index
-    006E  LDA #0
-    0070  STA $6DE0
-    0072  JSR set_char
-    0074  JMP intrupt_end
+    0056  @set_char #0
+    0058  DEC index
+    005A  @set_char #0
+    005C  JMP intrupt_end
 intrupt:
-    0076  LDA $6F00
-    0078  STA val
-    007A  TXA
-    007B  PHA
-    007C  LDA val
-    007E  CMP #(return_key)
-    0080  BEQ return
-    0082  CMP #(backspace_key)
-    0084  BEQ backspace
-    0086  LDA val
-    0088  STA $6DE0
-    008A  JSR set_char
-    008C  INC index
+    005E  LDA $6F00
+    0060  STA val
+    0062  TXA
+    0063  PHA
+    0064  LDA val
+    0066  CMP #(return_key)
+    0068  BEQ return
+    006A  CMP #(backspace_key)
+    006C  BEQ backspace
+    006E  @set_char val
+    0070  INC index
 intrupt_end:
-    008E  PLA
-    008F  TAX
-    0090  RTS
-    0091  ` $6DF0
-    0093  JMP intrupt
+    0072  PLA
+    0073  TAX
+    0074  RTS
+    0075  ` $6DF0
+    0077  JMP intrupt

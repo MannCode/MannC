@@ -1,0 +1,32 @@
+Variables:
+      line = 0x5A00
+      col = 0x5A01
+      index = 0x5A02
+      indexStart = 0x7000
+      actual_index = 0x5A03
+      line_length = #36
+      pix_length = #648
+      val = 0x5A04
+      cursor_val = #4
+      show_cursor = 0x5A05
+      cursor_wait = 0x5A06
+      return_key = #254
+      backspace_key = #255
+      mod_val = 0x5A07
+
+Lables:
+      start = 0x0000
+      loop = 0x0008
+      cursor_loop = 0x000A
+      set_cursor_one = 0x001B
+      set_cursor_end = 0x0023
+      set_char = 0x0025
+      new_line = 0x0031
+      check_pix_end = 0x004F
+      mod = 0x0051
+      mod_loop = 0x0053
+      break_mod = 0x005B
+      return = 0x005C
+      backspace = 0x0066
+      intrupt = 0x0076
+      intrupt_end = 0x008E

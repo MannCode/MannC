@@ -35,6 +35,8 @@ def save_pixel_data(pixel_data):
                 if i + j < len(pixel_data):
                     byte |= (int(pixel_data[i + j]) << (7 - j))
             f.write(bytes([byte]))
+    
+    print("Pixel data saved to pixel_data.bin")
 
 
 def main():

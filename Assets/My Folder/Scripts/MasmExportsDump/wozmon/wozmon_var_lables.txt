@@ -1,0 +1,27 @@
+Variables:
+      return_key = #254
+      backspace_key = #255
+      keyboard_port = 0x6F00
+      line = 0x5A00
+      col = 0x5A01
+      index = 0x5A02
+      indexStart = 0x7000
+      actual_index = 0x5A03
+      line_length = #36
+      pix_length = #648
+      val = 0x5A04
+      mod_val = 0x5A05
+
+Lables:
+      loop = 0x0003
+      print_char = 0x000C
+      set_char = 0x0014
+      new_line = 0x001B
+      check_pix_end = 0x002C
+      mod = 0x002E
+      mod_loop = 0x002F
+      break_mod = 0x0033
+      return = 0x0034
+      backspace = 0x0036
+      intrupt = 0x003B
+      intrupt_end = 0x0044

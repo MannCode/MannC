@@ -11,6 +11,7 @@ public class Keyboard_masm : MonoBehaviour
     public Emulator emu;
     public Emulator.MEM mem;
     public Emulator.CPU cpu;
+    public ushort port_address;
 
     KeyCode LastKeyPressed;
 
@@ -33,7 +34,10 @@ public class Keyboard_masm : MonoBehaviour
         { KeyCode.Q, 58 }, { KeyCode.R, 59 }, { KeyCode.S, 60 }, { KeyCode.T, 61 },
         { KeyCode.U, 62 }, { KeyCode.V, 63 }, { KeyCode.W, 64 }, { KeyCode.X, 65 },
         { KeyCode.Y, 66 }, { KeyCode.Z, 67 },
-        { KeyCode.Space, 72 },
+        { KeyCode.Period, 72 },
+        { KeyCode.Semicolon, 74 },
+        { KeyCode.Space, 78 },
+        { KeyCode.Escape, 0xFD },
         { KeyCode.Return, 0xFE },
         { KeyCode.Backspace, 0xFF }
     };
@@ -62,7 +66,7 @@ public class Keyboard_masm : MonoBehaviour
                 emu.INT = true;
                 cpu = emu.cpu;
                 mem = emu.mem;
-                cpu.writeShort(mem, 0x6F00, (ushort)keyCode); // write keycode to 0xF4
+                cpu.writeShort(mem, port_address, (ushort)keyCode); // write keycode to 0xF4
                 break;
             }
         }

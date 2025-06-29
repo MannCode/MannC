@@ -47,7 +47,7 @@ public class Assembler : MonoBehaviour
     const string MasmExportPath = "Assets/My Folder/Scripts/MasmExportsDump/";
     string binaryFilePath;
 
-    public string Finalcode;
+    public string SourceCode;
 
     // Properties of instructions
     Dictionary<string, ushort> instructions = new Dictionary<string, ushort> {
@@ -110,13 +110,11 @@ public class Assembler : MonoBehaviour
         string filename = Path.GetFileName(MasmFilePath)[0..^5]; // remove .masm extension
         // extract directory path from MasmFilePath
         string directoryPath = MasmFilePath[..(MasmFilePath.LastIndexOf('/')+1)];
-        Debug.Log("Directory Path: " + directoryPath);
         createExportDirectory(filename);
         
 
         //store each line of the file in an array
-        ParseCode = readFile(filename + ".masm", directoryPath);
-        exportParseCode(filename);
+        ParseCode = readFile(filename, directoryPath);
         
         //Replace ~macros like actual code
         ParseCode = ReplaceMacrosFunctions(ParseCode);
@@ -128,55 +126,70 @@ public class Assembler : MonoBehaviour
         // Extract variable, lables with wrong address (line number)
         ExtractVariablesAndLables();
 
-        ExportVariablesAndLables(filename);
 
         //GetuShortsPerLine
         getuShortsPerLine();
+
+        ExportVariablesAndLables(filename);
     
         // //parse the code
         parseCode();
 
-        update_finalCode();
+        exportParseCode(filename);
+
+        // update_finalCode();
 
         // //sabe the code in a file
         exportCode(filename, true);
     }
 
     List<string> readFile(string file, string directoryPath) {
-        StreamReader stm = new StreamReader(directoryPath + file);
-        List<string> code = new List<string>();
+        try
+        {
+            StreamReader stm = new StreamReader(directoryPath + file + ".masm");
 
-        while(!stm.EndOfStream) {
-            //read the lines and store it in parseCode
-            string ln = stm.ReadLine();
+            List<string> code = new List<string>();
 
-            //check for comments
-            string ln_temp = "";
-            foreach(char _char in ln) {
-                if(_char == ';') break;
-                ln_temp += _char;
-            }
-            ln = ln_temp;
-
-            //remove Blank spaces
-            ln = ln.Trim();
-
-            //check for blank lines
-            if(ln == "") {
-                continue;
-            }
-            
-            if (ln.Split(' ')[0] == "#link")
+            while (!stm.EndOfStream)
             {
-                string linkpath = ln.Split(' ')[1][1..^1];
-                List<string> file_parseCode = readFile(linkpath, directoryPath);
-                code.AddRange(file_parseCode);
-                continue;
-            }
+                //read the lines and store it in parseCode
+                string ln = stm.ReadLine();
 
-            code.Add(ln);
+                //check for comments
+                string ln_temp = "";
+                foreach (char _char in ln)
+                {
+                    if (_char == ';') break;
+                    ln_temp += _char;
+                }
+                ln = ln_temp;
+
+                //remove Blank spaces
+                ln = ln.Trim();
+
+                //check for blank lines
+                if (ln == "")
+                {
+                    continue;
+                }
+
+                if (ln.Split(' ')[0] == "#link")
+                {
+                    string linkpath = ln.Split(' ')[1][1..^1];
+                    List<string> file_parseCode = readFile(linkpath, directoryPath);
+                    code.AddRange(file_parseCode);
+                    continue;
+                }
+
+                code.Add(ln);
+            }
+            return code;
         }
-        return code;
+        catch
+        {
+            error("File not found: " + file + ".masm");
+            return new List<string>();
+        }
     }
 
     List<string> ReplaceMacrosFunctions(List<string> code) {
@@ -261,33 +274,6 @@ public class Assembler : MonoBehaviour
         }
     }
 
-    List<string> GetIncludedFile() {
-        List<string> includedFiles = new List<string>();
-        List<int> include_lines = new List<int>();
-        for(int i=0; i < ParseCode.Count; i++) {
-            string ln = ParseCode[i];
-            string[] words = ln.Split(' ');
-            if(words[0] == "#include") {
-                string[] next = words[1..];
-                string includeFile = next[0][1..^1];
-                for(int j=1; j < next.Length; j++) {
-                    if(next[j][next[j].Length - 1] == '"') {
-                        includeFile += " " + next[j][0..^1];
-                        break;
-                    }
-                    includeFile += " " + next[j];
-                }
-                //remove the file name from alprogramFilepath
-                string newFilePath = MasmFilePath[0..^MasmFilePath.Split('/')[MasmFilePath.Split('/').Length - 1].Length];
-                includedFiles.Add(newFilePath + includeFile);
-                include_lines.Add(i);
-            }
-        }
-        //remove the include lines from the parseCode
-        ParseCode = removeIndicesFromArray(ParseCode, include_lines);
-        return includedFiles;
-    }
-
     void ExtractVariablesAndLables() {
         var lableIndices = new List<int>();
         int instructionIndex = 0;
@@ -296,18 +282,22 @@ public class Assembler : MonoBehaviour
         for(int i = 0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
             //check for variables
-            if(ln[0].ToString() == ".") {
+            if (ln[0].ToString() == ".")
+            {
                 string[] temp = ln.Split(' ');
                 string varName = temp[0][1..];
                 string varValue = "";
-                if(temp.Count() > 1) {
+                if (temp.Count() > 1)
+                {
                     varValue = getDecimalVal(temp[2]).ToString();
                 }
-                else {
+                else
+                {
                     varValue = (variableCount + variableStartindex).ToString();
                     variableCount++;
 
-                    if(variableCount > 5087) {
+                    if (variableCount > 5087)
+                    {
                         error("Too many variables");
                         return;
                     }
@@ -319,14 +309,16 @@ public class Assembler : MonoBehaviour
                 // i--;
             }
             //check for lables
-            else if(ln[ln.Length - 1].ToString() == ":") {
+            else if (ln[ln.Length - 1].ToString() == ":")
+            {
                 string lableName = ln[0..^1];
 
                 // print(lableName + " " + instructionIndex);
                 lables.Add(lableName, (ushort)instructionIndex);
                 lableIndices.Add(i);
             }
-            else {
+            else
+            {
                 instructionIndex++;
             }
         }
@@ -349,7 +341,7 @@ public class Assembler : MonoBehaviour
             }
 
             string[] temp = ParseCode[i].Split(' ');
-            if(temp[0][0] == '.') {
+            if(temp[0][0] == '.' || temp[0][0] == '`') {
                 uShortPerLine.Add(0);
             }
             else if(temp.Length == 1) {
@@ -358,7 +350,13 @@ public class Assembler : MonoBehaviour
             else if(temp.Length > 1) {
                 uShortPerLine.Add(2);
             }
+
             addIndex += (ushort)uShortPerLine[i];
+
+            if (temp[0][0] == '`')
+            {
+                addIndex = (ushort)Convert.ToInt16(temp[1][1..], 16);
+            } 
         }
 
         lables = newLables;
@@ -572,6 +570,7 @@ public class Assembler : MonoBehaviour
                 else if(lables.ContainsKey(_token)) {
                     // print("Lable: " + _token);
                     // print("Value: " + lables[_token]);
+                    
                     valueStack.Add(lables[_token].ToString());
                 }
                 else {
@@ -673,7 +672,7 @@ public class Assembler : MonoBehaviour
 
         stm.WriteLine("\nLables:");
         foreach(var lable in lables) {
-            stm.WriteLine("      " + lable.Key + " = 0x" + lable.Value.ToString("X4"));
+            stm.WriteLine("      " + lable.Key + " = 0x" + lables[lable.Key].ToString("X4"));
         }
     }
 
@@ -681,21 +680,34 @@ public class Assembler : MonoBehaviour
         StreamWriter stm = new StreamWriter(MasmExportPath + fileName + "/" + fileName + "_ParseCode.txt");
         stm.AutoFlush = true;
         ushort addIndex = 0;
-        ushort varindex = 0x2000;
+        ushort varindex = 0x5A00;
         foreach(string ln in ParseCode) {
-            if(ln[0] == '.' || ln[ln.Length-1] == ':') {
-                if(ln[0] == '.' && !ln.Contains("=")) {
+            if(ln[0] == '.' || ln[ln.Length-1] == ':' || ln[0] == '~' || ln[0] == '}') {
+                if (ln[0] == '.' && !ln.Contains("="))
+                {
                     string varName = ln[1..];
                     stm.WriteLine(ln + "   " + varindex.ToString("X4"));
+                    SourceCode += ln + "   " + varindex.ToString("X4") + "\n";
                     varindex++;
                 }
-                else {
+                else
+                {
                     stm.WriteLine(ln);
+                    SourceCode += ln + "\n";
                 }
             }
-            else {
+            else if(ln[0] == '`')
+            {
+                //its a direct memory code to store shorts directly inside memory
+                stm.WriteLine(ln);
+                SourceCode += ln + "\n";
+                addIndex = (ushort)Convert.ToInt16(ln.Split(' ')[1][1..], 16);
+            }
+            else
+            {
                 stm.WriteLine("    " + addIndex.ToString("X4") + "  " + ln);
-                if(ln.Split(' ').Length == 1) addIndex++;
+                SourceCode += "    " + addIndex.ToString("X4") + "  " + ln + "\n";
+                if (ln.Split(' ').Length == 1) addIndex++;
                 else addIndex += 2;
             }
         }
@@ -759,9 +771,9 @@ public class Assembler : MonoBehaviour
     }
 
     void update_finalCode() {
-        Finalcode = "";
+        SourceCode = "";
         foreach(string ln in ParseCode) {
-            Finalcode += ln + "\n";
+            SourceCode += ln + "\n";
         }
     }
 

@@ -24,15 +24,15 @@
     %01: $D : "address"
     %10: $E : "address + X"
 %000100XX: STA -> "Store A to mem"
-    %00: $11 : "address"
-    %01: $12 : "address + X"
-    %10: $13 : "address + Y"
+    %01: $11 : "address"
+    %10: $12 : "address + X"
+    %11: $13 : "address + Y"
 %000101XX: STX -> "Store X to mem"
-    %00: $15 : "address"
-    %01: $17 : "address + Y"
+    %01: $15 : "address"
+    %10: $17 : "address + Y"
 %000110XX: STY -> "Store Y to mem"
-    %00: $19 : "address"
-    %01: $1A : "address + X"
+    %01: $19 : "address"
+    %10: $1A : "address + X"
 
 
 == Transfer Register ==

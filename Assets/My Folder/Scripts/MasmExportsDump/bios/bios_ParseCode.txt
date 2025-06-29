@@ -1,0 +1,115 @@
+.line   5A00
+.col   5A01
+.index   5A02
+.indexStart = $7000
+.actual_index   5A03
+.line_length = 36
+.pix_length = 648
+.val   5A04
+    0000  JMP $4C00
+    0002  LDA index
+    0004  ADD #(indexStart)
+    0006  STA actual_index
+    0008  LDA $6DE0
+    000A  CMP #$FE
+    000C  BEQ return_bios
+    000E  CMP #$FF
+    0010  BEQ backspace_bios
+    0012  CMP #$FD
+    0014  BEQ print_char_end
+    0016  STA [actual_index], 0
+    0018  INC index
+    001A  DUP
+    001B  RTS
+    001C  LDA index
+    001E  ADD #(indexStart)
+    0020  STA actual_index
+    0022  LDA $6DE0
+    0024  STA [actual_index], 0
+    0026  DUP
+    0027  RTS
+.mod_val   5A05
+    0028  PHA
+    0029  LDA index
+    002B  STA $6DE0
+    002D  LDA #(line_length)
+    002F  STA $6DE1
+    0031  JSR mod
+    0033  STA mod_val
+    0035  LDA #(line_length)
+    0037  SUB mod_val
+    0039  ADD index
+    003B  STA index
+    003D  CMP #(pix_length)
+    003F  BNE check_pix_end
+    0041  LDA #0
+    0043  STA index
+    0045  CLS
+    0046  PLA
+    0047  RTS
+    0048  LDA $6DE0
+    004A  CMP $6DE1
+    004C  BCC break_mod
+    004E  SUB $6DE1
+    0050  JMP mod_loop
+    0052  RTS
+    0053  JSR new_line
+    0055  JMP print_char_end
+    0057  DEC index
+    0059  LDA #0
+    005B  STA $6DE0
+    005D  JSR set_char
+    005F  JMP print_char_end
+` $4C00
+.MODE   5A06
+.IN = $5000
+.KBD   5A07
+.KBDCR   5A08
+.A_temp   5A09
+    4C00  CLS
+    4C01  LDY #$FFFF
+    4C03  CMP #$FF
+    4C05  BEQ BACKSPACE
+    4C07  CMP #$FD
+    4C09  BEQ ESCAPE
+    4C0B  INY
+    4C0C  BCC NEXTCHAR
+    4C0E  LDA #42
+    4C10  JSR ECHO
+    4C12  LDA #$FE
+    4C14  JSR ECHO
+    4C16  LDY #1
+    4C18  DEY
+    4C19  BCS GETLINE
+    4C1B  LDA KBDCR
+    4C1D  BEQ NEXTCHAR
+    4C1F  DEC KBDCR
+    4C21  LDA KBD
+    4C23  STA [IN, Y]
+    4C25  JSR ECHO
+    4C27  CMP #$FE
+    4C29  BNE NOTCR
+    4C2B  LDY #$FF
+    4C2D  LDA #$00
+    4C2F  TAX
+    4C30  SLA
+    4C31  STA MODE
+    4C33  INY
+    4C34  LDA [IN, Y]
+    4C36  CMP #$FE
+    4C38  BEQ GETLINE
+    4C3A  CMP #70
+    4C3C  BCC BLSKIP
+    4C3E  JMP NEXTCHAR
+    4C40  STA A_temp
+    4C42  LDA A_temp
+    4C44  STA $6DE0
+    4C46  JSR print_char
+    4C48  RTS
+    4C49  LDA #1
+    4C4B  STA KBDCR
+    4C4D  LDA $6F00
+    4C4F  STA KBD
+    4C51  RTS
+` $6DF0
+    6DF0  JMP intrupt

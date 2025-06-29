@@ -1,0 +1,80 @@
+.line
+.col
+.index
+.indexStart = $7000
+.actual_index
+.line_length = 36
+.pix_length = 648
+.val
+
+start:
+    JMP $4C00
+
+~print_char 1 {  ; Print char on the current position and increment cursor
+    LDA index
+    ADD #(indexStart)
+    STA actual_index
+    LDA ^1
+    CMP #$FE                    ; CR?
+    BEQ return_bios
+    CMP #$FF                    ; backspace?
+    BEQ backspace_bios
+    CMP #$FD                    ; ESC?
+    BEQ print_char_end
+    STA [actual_index], 0
+    INC index
+    DUP
+print_char_end:
+}
+
+~set_char 1 {  ; Set char on the current position of cursor
+    LDA index
+    ADD #(indexStart)
+    STA actual_index
+    LDA ^1
+    STA [actual_index], 0
+    DUP
+}
+
+new_line:
+.mod_val
+    PHA
+    @mod index #(line_length)
+    STA mod_val
+    LDA #(line_length)
+    SUB mod_val
+    ADD index
+    STA index
+    CMP #(pix_length)
+    BNE check_pix_end
+    LDA #0
+    STA index
+    CLS
+check_pix_end:
+    PLA
+    RTS
+
+~mod 2 {
+; A, B
+    LDA ^1
+mod_loop:
+    CMP ^2
+    BCC break_mod
+    SUB ^2
+    JMP mod_loop
+break_mod:
+}
+
+return_bios:
+    JSR new_line
+    JMP print_char_end
+
+backspace_bios:
+    DEC index
+    @set_char #0
+    JMP print_char_end
+
+#link "main"
+
+` $6DF0
+    JMP intrupt

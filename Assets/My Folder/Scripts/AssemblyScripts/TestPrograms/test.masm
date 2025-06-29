@@ -14,8 +14,6 @@
 .return_key = $FE
 .backspace_key = $FF
 
-#link "path/sample.masm"
-
 start:
     LDA #0
     STA val

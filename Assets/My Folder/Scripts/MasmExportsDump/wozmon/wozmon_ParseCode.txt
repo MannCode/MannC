@@ -1,0 +1,75 @@
+.return_key = $FE
+.backspace_key = $FF
+.keyboard_port = $6F00
+loop:
+    0000  JMP loop
+.line   2000
+.col   2001
+.index   2002
+.indexStart = $7000
+.actual_index   2003
+.line_length = 36
+.pix_length = 648
+.val   2004
+    0002  ~print_char 1 {
+    0004  LDA index
+    0006  ADD #(indexStart)
+    0008  STA actual_index
+    000A  LDA ^1
+    000C  STA [actual_index], 0
+    000E  INC index
+    0010  DUP
+    0011  }
+    0012  ~set_char 1 {
+    0014  LDA index
+    0016  ADD #(indexStart)
+    0018  STA actual_index
+    001A  LDA ^1
+    001C  STA [actual_index], 0
+    001E  DUP
+    001F  }
+new_line:
+.mod_val   2005
+    0020  PHA
+    0021  @mod index #(line_length)
+    0023  STA mod_val
+    0025  LDA #(line_length)
+    0027  SUB mod_val
+    0029  ADD index
+    002B  STA index
+    002D  CMP #(pix_length)
+    002F  BNE check_pix_end
+    0031  LDA #0
+    0033  STA index
+    0035  CLS
+check_pix_end:
+    0036  PLA
+    0037  RTS
+    0038  ~mod 2 {
+    003A  LDA ^1
+mod_loop:
+    003C  CMP ^2
+    003E  BCC break_mod
+    0040  SUB ^2
+    0042  JMP mod_loop
+break_mod:
+    0044  }
+return:
+    0045  JSR new_line
+    0047  JMP intrupt_end
+backspace:
+    0049  DEC index
+    004B  @set_char #0
+    004D  JMP intrupt_end
+intrupt:
+    004F  LDA keyboard_port
+    0051  STA val
+    0053  CMP #(return_key)
+    0055  BEQ return
+    0057  CMP #(backspace_key)
+    0059  BEQ backspace
+    005B  @print_char val
+intrupt_end:
+    005D  RTS
+    005E  ` $6DF0
+    0060  JMP intrupt
