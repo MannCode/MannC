@@ -1,10 +1,15 @@
 ; Variables initialization
 
 ; 0 page variables (not in my case)
-.MODE               ; $00=XAM, $7F=STOR, $AE=BLOCK XAM
+.XAMCH
+.STCH
+.CH
+.YSAV
+.ASAV
+.MODE               ; $00=XAM, $4A=STOR, $48=BLOCK XAM 
 
 ; other variables
-.IN = $5000         ; Inputer buffer to 527F
+.IN = $5000         ; Input buffer to $527F
 .KBD                ; Keyboard input
 .KBDCR              ; keyboard control register
 
@@ -23,7 +28,7 @@ NOTCR:
     INY
     BCC NEXTCHAR    ; Auto ESC if OFB
 ESCAPE:
-    LDA #42       ; print "A"
+    LDA #02       ; print square
     JSR ECHO
 GETLINE:
     LDA #$FE
@@ -42,40 +47,121 @@ NEXTCHAR:
     CMP #$FE        ; CR?
     BNE NOTCR       ; No.
 
-    LDY #$FF
+    LDY #$FFFF
     LDA #$00
     TAX
-SETSTOR:
-    SLA             ; Leaves $94 if STOR mode
 SETMODE:
-    STA MODE        ; $00=XAM, $94=STOR, $48=BLOCK XAM 
+    STA MODE        ; $00=XAM, $4A=STOR, $48=BLOCK XAM 
 BLSKIP:
     INY             ; INC text index
 NEXTITEM:
     LDA [IN, Y]     ; Get character
     CMP #$FE        ; CR?
     BEQ GETLINE     ; Yes, done this line.
+    CMP #$4E         ; [space]?
+    BEQ BLSKIP      ; Skip delimiter
     CMP #$48        ; "."?
-    BCC BLSKIP      ; Skip delimiter
     BEQ SETMODE     ; Set BLOCK XAM mode
     CMP #$4A        ; ":"?
-    BEQ SETSTOR     ; store mode
-    BEQ #$3B        ; "R"?
-    BEQ RUN         ; Run user program
+    BEQ SETMODE     ; store mode
+    CMP #$3B        ; "R"?
+;   BEQ RUN         ; Run user program
+    STX CH          ; $00->CH
+    STY YSAV        ; Save Y for comparison
+NEXTHEX:
+    LDA [IN, Y]      ; Get character for hex test.
+    CMP #$14         ; Hex?
+    BCS HEX         ; Yes, 2A - 2F
+    SUB #$A         ; char - $A = num [0-9]
+    JMP DIG         ; jump to DIG
+HEX:
+    SUB #$20        ; char - $20 = num [A-F]
+DIG:
+    CMP #$10        ; num >= $10
+    BCS NOTHEX      ; Yes, its not a hex.
+    ; this part will move CH left a nibble and store num in CH.
+    TAX             ; Transfer A -> X
+    LDA CH          ; load CH in A
+    SLA #4          ; shift A 4 times
+    STA CH          ; store shifted CH
+    TXA             ; get num back
+    LDX #0
+    ADD CH          ; CH + num
+    STA CH          ; store updated CH
+    INY
+    JMP NEXTHEX
+NOTHEX:
+    CPY YSAV        ; Check if CH is empty (no hex digit)
+    BEQ ESCAPE      ; Yes, Crash it mf
+    LDA MODE
+    CMP #$4A        ; MODE != 4A (STOR)
+    BNE NOTSTOR
 
+TONEXTITEM:
+    JMP NEXTITEM
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+RUN:
+    JMP #$00
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+NOTSTOR:
+    CMP #$00        ; MODE != 00 (XAM)
+    BNE XAMNEXT
 
+    LDA CH
+    STA STCH
+    STA XAMCH       ; CH = STCH = XAMCH
 
-    JMP NEXTCHAR
+    LDX #0
+NXTPRNT:
+    BNE PRDATA      ; NE means no address to print
+    LDA #$FE        ; CR.
+    JSR ECHO        ; Output it
+    LDA XAMCH       ; 'Examine index'
+    JSR PRSHORT
+    LDA #$4A        ; ":".
+    JSR ECHO
+PRDATA:
+    LDA #00         ; blank
+    JSR ECHO
+    LDA [XAMCH], 0  ; Get data short at 'examine index'
+    JSR PRSHORT
 
+XAMNEXT:
+    STX MODE        ; 0->MODE (XAM mode).
+    LDA XAMCH
+    CMP CH          ; Compare 'examine index' to hex data
+    BCS TONEXTITEM  ; Not less, so no more data to output
+    INC XAMCH
+    LDA XAMCH
+    AND #3
+    JMP NXTPRNT
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRSHORT:
+    STA ASAV
+    SRA #12
+    JSR PRHEX
+    LDA ASAV
+    SRA #8
+    JSR PRHEX
+    LDA ASAV
+    SRA #4
+    JSR PRHEX
+    LDA ASAV
+PRHEX:
+    AND #$000F      ; Mask first 4 bits
+    ADD #$A         ; Add "0"
+    CMP #20         ; A < 20? Digit?
+    BCC ECHO        ; Yes
+    ADD #22         ; Add offset for letters
 ECHO:
 ; This code display the character
     STA A_temp
     @print_char A_temp
     RTS
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 intrupt:
     LDA #1

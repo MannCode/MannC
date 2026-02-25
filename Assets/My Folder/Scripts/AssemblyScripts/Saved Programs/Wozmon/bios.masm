@@ -6,11 +6,35 @@
 .line_length = 36
 .pix_length = 648
 .val
+.dispLock
+
+;; $264 last line of display
 
 start:
     JMP $4C00
 
 ~print_char 1 {  ; Print char on the current position and increment cursor
+    LDA index
+; check if last line and lock display
+    CMP #$264
+    BCC NoLockprint_char
+    DUP
+    INC dispLock
+displockloop:
+    LDA dispLock
+    CMP #00
+    BEQ Unlockdispprint_char
+    JMP displockloop
+Unlockdispprint_char:
+    STA index
+    CLS
+NoLockprint_char:
+    @set_char ^1
+    INC index
+    DUP
+}
+
+~set_char 1 {  ; Set char on the current position of cursor
     LDA index
     ADD #(indexStart)
     STA actual_index
@@ -20,20 +44,9 @@ start:
     CMP #$FF                    ; backspace?
     BEQ backspace_bios
     CMP #$FD                    ; ESC?
-    BEQ print_char_end
+    BEQ set_char_end
     STA [actual_index], 0
-    INC index
-    DUP
-print_char_end:
-}
-
-~set_char 1 {  ; Set char on the current position of cursor
-    LDA index
-    ADD #(indexStart)
-    STA actual_index
-    LDA ^1
-    STA [actual_index], 0
-    DUP
+set_char_end:
 }
 
 new_line:
@@ -67,14 +80,25 @@ break_mod:
 
 return_bios:
     JSR new_line
-    JMP print_char_end
+    DEC index
+    JMP set_char_end
 
 backspace_bios:
     DEC index
     @set_char #0
-    JMP print_char_end
+    DEC index
+    JMP set_char_end
 
 #link "main"
 
 ` $6DF0
+    PHA
+    LDA dispLock
+    CMP #01
+    BCS BreakdispLock
+    PLA
     JMP intrupt
+BreakdispLock:
+    DEC dispLock
+    PLA
+    RTS

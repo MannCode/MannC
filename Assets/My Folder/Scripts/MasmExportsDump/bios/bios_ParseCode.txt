@@ -6,66 +6,82 @@
 .line_length = 36
 .pix_length = 648
 .val   5A04
+.dispLock   5A05
     0000  JMP $4C00
     0002  LDA index
-    0004  ADD #(indexStart)
-    0006  STA actual_index
-    0008  LDA $6DE0
-    000A  CMP #$FE
-    000C  BEQ return_bios
-    000E  CMP #$FF
-    0010  BEQ backspace_bios
-    0012  CMP #$FD
-    0014  BEQ print_char_end
-    0016  STA [actual_index], 0
-    0018  INC index
-    001A  DUP
-    001B  RTS
-    001C  LDA index
-    001E  ADD #(indexStart)
-    0020  STA actual_index
-    0022  LDA $6DE0
-    0024  STA [actual_index], 0
-    0026  DUP
-    0027  RTS
-.mod_val   5A05
-    0028  PHA
-    0029  LDA index
-    002B  STA $6DE0
-    002D  LDA #(line_length)
-    002F  STA $6DE1
-    0031  JSR mod
-    0033  STA mod_val
-    0035  LDA #(line_length)
-    0037  SUB mod_val
-    0039  ADD index
-    003B  STA index
-    003D  CMP #(pix_length)
-    003F  BNE check_pix_end
-    0041  LDA #0
-    0043  STA index
-    0045  CLS
-    0046  PLA
-    0047  RTS
-    0048  LDA $6DE0
-    004A  CMP $6DE1
-    004C  BCC break_mod
-    004E  SUB $6DE1
-    0050  JMP mod_loop
-    0052  RTS
-    0053  JSR new_line
-    0055  JMP print_char_end
-    0057  DEC index
-    0059  LDA #0
-    005B  STA $6DE0
-    005D  JSR set_char
-    005F  JMP print_char_end
+    0004  CMP #$264
+    0006  BCC NoLockprint_char
+    0008  DUP
+    0009  INC dispLock
+    000B  LDA dispLock
+    000D  CMP #00
+    000F  BEQ Unlockdispprint_char
+    0011  JMP displockloop
+    0013  STA index
+    0015  CLS
+    0016  LDA $6DE0
+    0018  STA $6DE0
+    001A  JSR set_char
+    001C  INC index
+    001E  DUP
+    001F  RTS
+    0020  LDA index
+    0022  ADD #(indexStart)
+    0024  STA actual_index
+    0026  LDA $6DE0
+    0028  CMP #$FE
+    002A  BEQ return_bios
+    002C  CMP #$FF
+    002E  BEQ backspace_bios
+    0030  CMP #$FD
+    0032  BEQ set_char_end
+    0034  STA [actual_index], 0
+    0036  RTS
+.mod_val   5A06
+    0037  PHA
+    0038  LDA index
+    003A  STA $6DE0
+    003C  LDA #(line_length)
+    003E  STA $6DE1
+    0040  JSR mod
+    0042  STA mod_val
+    0044  LDA #(line_length)
+    0046  SUB mod_val
+    0048  ADD index
+    004A  STA index
+    004C  CMP #(pix_length)
+    004E  BNE check_pix_end
+    0050  LDA #0
+    0052  STA index
+    0054  CLS
+    0055  PLA
+    0056  RTS
+    0057  LDA $6DE0
+    0059  CMP $6DE1
+    005B  BCC break_mod
+    005D  SUB $6DE1
+    005F  JMP mod_loop
+    0061  RTS
+    0062  JSR new_line
+    0064  DEC index
+    0066  JMP set_char_end
+    0068  DEC index
+    006A  LDA #0
+    006C  STA $6DE0
+    006E  JSR set_char
+    0070  DEC index
+    0072  JMP set_char_end
 ` $4C00
-.MODE   5A06
+.XAMCH   5A07
+.STCH   5A08
+.CH   5A09
+.YSAV   5A0A
+.ASAV   5A0B
+.MODE   5A0C
 .IN = $5000
-.KBD   5A07
-.KBDCR   5A08
-.A_temp   5A09
+.KBD   5A0D
+.KBDCR   5A0E
+.A_temp   5A0F
     4C00  CLS
     4C01  LDY #$FFFF
     4C03  CMP #$FF
@@ -74,7 +90,7 @@
     4C09  BEQ ESCAPE
     4C0B  INY
     4C0C  BCC NEXTCHAR
-    4C0E  LDA #42
+    4C0E  LDA #02
     4C10  JSR ECHO
     4C12  LDA #$FE
     4C14  JSR ECHO
@@ -89,27 +105,105 @@
     4C25  JSR ECHO
     4C27  CMP #$FE
     4C29  BNE NOTCR
-    4C2B  LDY #$FF
+    4C2B  LDY #$FFFF
     4C2D  LDA #$00
     4C2F  TAX
-    4C30  SLA
-    4C31  STA MODE
-    4C33  INY
-    4C34  LDA [IN, Y]
-    4C36  CMP #$FE
-    4C38  BEQ GETLINE
-    4C3A  CMP #70
-    4C3C  BCC BLSKIP
-    4C3E  JMP NEXTCHAR
-    4C40  STA A_temp
-    4C42  LDA A_temp
-    4C44  STA $6DE0
-    4C46  JSR print_char
-    4C48  RTS
-    4C49  LDA #1
-    4C4B  STA KBDCR
-    4C4D  LDA $6F00
-    4C4F  STA KBD
-    4C51  RTS
+    4C30  STA MODE
+    4C32  INY
+    4C33  LDA [IN, Y]
+    4C35  CMP #$FE
+    4C37  BEQ GETLINE
+    4C39  CMP #$4E
+    4C3B  BEQ BLSKIP
+    4C3D  CMP #$48
+    4C3F  BEQ SETMODE
+    4C41  CMP #$4A
+    4C43  BEQ SETMODE
+    4C45  CMP #$3B
+    4C47  STX CH
+    4C49  STY YSAV
+    4C4B  LDA [IN, Y]
+    4C4D  CMP #$14
+    4C4F  BCS HEX
+    4C51  SUB #$A
+    4C53  JMP DIG
+    4C55  SUB #$20
+    4C57  CMP #$10
+    4C59  BCS NOTHEX
+    4C5B  TAX
+    4C5C  LDA CH
+    4C5E  SLA #4
+    4C60  STA CH
+    4C62  TXA
+    4C63  LDX #0
+    4C65  ADD CH
+    4C67  STA CH
+    4C69  INY
+    4C6A  JMP NEXTHEX
+    4C6C  CPY YSAV
+    4C6E  BEQ ESCAPE
+    4C70  LDA MODE
+    4C72  CMP #$4A
+    4C74  BNE NOTSTOR
+    4C76  JMP NEXTITEM
+    4C78  JMP #$00
+    4C7A  CMP #$00
+    4C7C  BNE XAMNEXT
+    4C7E  LDA CH
+    4C80  STA STCH
+    4C82  STA XAMCH
+    4C84  LDX #0
+    4C86  BNE PRDATA
+    4C88  LDA #$FE
+    4C8A  JSR ECHO
+    4C8C  LDA XAMCH
+    4C8E  JSR PRSHORT
+    4C90  LDA #$4A
+    4C92  JSR ECHO
+    4C94  LDA #00
+    4C96  JSR ECHO
+    4C98  LDA [XAMCH], 0
+    4C9A  JSR PRSHORT
+    4C9C  STX MODE
+    4C9E  LDA XAMCH
+    4CA0  CMP CH
+    4CA2  BCS TONEXTITEM
+    4CA4  INC XAMCH
+    4CA6  LDA XAMCH
+    4CA8  AND #3
+    4CAA  JMP NXTPRNT
+    4CAC  STA ASAV
+    4CAE  SRA #12
+    4CB0  JSR PRHEX
+    4CB2  LDA ASAV
+    4CB4  SRA #8
+    4CB6  JSR PRHEX
+    4CB8  LDA ASAV
+    4CBA  SRA #4
+    4CBC  JSR PRHEX
+    4CBE  LDA ASAV
+    4CC0  AND #$000F
+    4CC2  ADD #$A
+    4CC4  CMP #20
+    4CC6  BCC ECHO
+    4CC8  ADD #22
+    4CCA  STA A_temp
+    4CCC  LDA A_temp
+    4CCE  STA $6DE0
+    4CD0  JSR print_char
+    4CD2  RTS
+    4CD3  LDA #1
+    4CD5  STA KBDCR
+    4CD7  LDA $6F00
+    4CD9  STA KBD
+    4CDB  RTS
 ` $6DF0
-    6DF0  JMP intrupt
+    6DF0  PHA
+    6DF1  LDA dispLock
+    6DF3  CMP #01
+    6DF5  BCS BreakdispLock
+    6DF7  PLA
+    6DF8  JMP intrupt
+    6DFA  DEC dispLock
+    6DFC  PLA
+    6DFD  RTS

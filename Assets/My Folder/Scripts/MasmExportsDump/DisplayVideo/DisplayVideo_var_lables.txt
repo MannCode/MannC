@@ -7,9 +7,9 @@ Variables:
       MultipleCount = 0x5A03
 
 Lables:
-      start = 0x0005
-      loop = 0x000B
-      reset = 0x0011
-      DrawMultiple = 0x0016
-      DrawMultipleLoop = 0x001C
-      DrawMultipleEnd = 0x0022
+      start = 0x0000
+      loop = 0x000C
+      reset = 0x0018
+      DrawMultiple = 0x0022
+      DrawMultipleLoop = 0x002C
+      DrawMultipleEnd = 0x0037

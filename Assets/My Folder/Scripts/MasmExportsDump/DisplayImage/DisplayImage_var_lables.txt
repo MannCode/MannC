@@ -1,0 +1,17 @@
+Variables:
+      line = 0x5A00
+      col = 0x5A01
+      indexStart = 0x5A02
+      line_length = #36
+      val = 0x5A03
+      index = 0x5A04
+
+Lables:
+      start = 0x0000
+      add_char = 0x0F5D
+      else = 0x0F7E
+      end = 0x0F80
+      new_line = 0x0F81
+      mul = 0x0F88
+      loop_mul = 0x0F8A
+      end_mul = 0x0F94

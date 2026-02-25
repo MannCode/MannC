@@ -110,7 +110,7 @@ def convert_vid_to_indexes(vid_path):
 
     print("Total frames generated: ", frames)
 
-    with open("/Users/mandeepsingh/MyStuff/Programming/Unity/Projects/MannC/Assets/My Folder/Scripts/Saved Programs/DisplayVideo/DisplayVideo.asm", "w") as output_file:
+    with open("/Users/mandeepsingh/MyStuff/Programming/Unity/Projects/MannC/Assets/My Folder/Scripts/Saved Programs/DisplayVideo/DisplayVideo.masm", "w") as output_file:
         print("Writing to file")
         output_file.write(program)
 
@@ -120,4 +120,4 @@ def convert_vid_to_indexes(vid_path):
 def new_line():
     print("JSR new_line")
 
-convert_vid_to_indexes("/Users/mandeepsingh/MyStuff/Programming/Unity/Projects/bad_apple.mp4")
+convert_vid_to_indexes("/Users/mandeepsingh/myStuff/programming/unity/projects/dancing-dance.gif")

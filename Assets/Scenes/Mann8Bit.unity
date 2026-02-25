@@ -3086,8 +3086,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   emulator: {fileID: 982881736}
-  MasmFilePath: /Users/mandeepsingh/myStuff/programming/unity/projects/MannC/Assets/My
-    Folder/Scripts/AssemblyScripts/Saved Programs/TextEditor/textEditor.masm
+  MasmFilePath: Assets/My Folder/Scripts/AssemblyScripts/Saved Programs/TextEditor/textEditor.masm
   SourceCode: 
   ParseCode: []
   code: 
@@ -7211,9 +7210,13 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 0}
   m_SortingOrder: 0
+  m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
 --- !u!1 &998551864
 GameObject:
   m_ObjectHideFlags: 0

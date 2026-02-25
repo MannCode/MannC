@@ -1,0 +1,21 @@
+.val   5A00
+.index   5A01
+    0000  LDA #42
+    0002  STA val
+    0004  LDA #$7000
+    0006  STA index
+    0008  LDX #68
+    000A  LDY #$7288
+    000C  LDA val
+    000E  STA [index], 0
+    0010  INC val
+    0012  CPX val
+    0014  BEQ reset
+    0016  DUP
+    0017  INC index
+    0019  CPY index
+    001B  BEQ start
+    001D  JMP loop
+    001F  LDA #42
+    0021  STA val
+    0023  JMP loopC
