@@ -1,11 +1,31 @@
-start:
-    LDA #00
-    TAX
+.rndnum
 
-loop:
-    JSR start
-    INX
-    CMP #$4A
-    BCS start
-    TXA
-    JMP loop
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rand16:
+    LDA rndnum
+    SLA #1
+    BCC no_xor
+    XOR #$B400
+no_xor:
+    STA rndnum
+    RTS

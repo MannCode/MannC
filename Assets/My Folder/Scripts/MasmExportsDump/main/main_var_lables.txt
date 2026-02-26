@@ -1,5 +1,7 @@
 Variables:
+      rndnum = 0x5A00
 
 Lables:
-      start = 0x0000
-      loop = 0x0003
+      loop = 0x0004
+      rand16 = 0x0008
+      no_xor = 0x0010

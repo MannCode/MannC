@@ -6,78 +6,174 @@
 .line_length = 36
 .pix_length = 648
 .val   5A04
-    0000  JMP $5280
+.str_char   5A05
+.str_msg   5A06
+    0000  JMP $4C00
     0002  LDA $6DE0
-    0004  STA $6DE0
-    0006  JSR set_char
-    0008  INC index
-    000A  RTS
-    000B  LDA index
-    000D  ADD #(indexStart)
-    000F  STA actual_index
-    0011  CMP #$7288
-    0013  BCS clear_screen
-    0015  LDA $6DE0
-    0017  CMP #$FE
-    0019  BEQ return_bios
-    001B  CMP #$FF
-    001D  BEQ backspace_bios
-    001F  CMP #$FD
-    0021  BEQ set_char_end
-    0023  STA [actual_index], 0
-    0025  DUP
-    0026  RTS
-    0027  CLS
-    0028  LDA #00
-    002A  STA index
-    002C  LDA #(indexStart)
-    002E  STA actual_index
-    0030  JMP clear_screen_end
-.mod_val   5A05
-    0032  PHA
-    0033  LDA index
-    0035  STA $6DE0
-    0037  LDA #(line_length)
-    0039  STA $6DE1
-    003B  JSR mod
-    003D  STA mod_val
-    003F  LDA #(line_length)
-    0041  SUB mod_val
-    0043  ADD index
-    0045  STA index
-    0047  CMP #(pix_length)
-    0049  BNE check_pix_end
-    004B  LDA #0
-    004D  STA index
-    004F  CNP
-    0050  PLA
-    0051  RTS
-    0052  LDA $6DE0
-    0054  CMP $6DE1
-    0056  BCC break_mod
-    0058  SUB $6DE1
-    005A  JMP mod_loop
-    005C  RTS
-    005D  JSR new_line
-    005F  DEC index
-    0061  JMP set_char_end
-    0063  DEC index
-    0065  LDA #0
-    0067  STA $6DE0
-    0069  JSR set_char
-    006B  DEC index
-    006D  JMP set_char_end
+    0004  STA str_msg
+    0006  LDA [str_msg], X
+    0008  BEQ print_str_done
+    000A  STA str_char
+    000C  LDA str_char
+    000E  STA $6DE0
+    0010  JSR print_char
+    0012  INX
+    0013  JMP print_str_loop
+    0015  RTS
+    0016  LDA $6DE0
+    0018  STA $6DE0
+    001A  JSR set_char
+    001C  INC index
+    001E  RTS
+    001F  LDA index
+    0021  ADD #(indexStart)
+    0023  STA actual_index
+    0025  CMP #$7288
+    0027  BCS clear_screen
+    0029  LDA $6DE0
+    002B  CMP #$FE
+    002D  BEQ return_bios
+    002F  CMP #$FF
+    0031  BEQ backspace_bios
+    0033  CMP #$FD
+    0035  BEQ set_char_end
+    0037  STA [actual_index], 0
+    0039  DUP
+    003A  RTS
+    003B  CLS
+    003C  LDA #00
+    003E  STA index
+    0040  LDA #(indexStart)
+    0042  STA actual_index
+    0044  JMP clear_screen_end
+.mod_val   5A07
+    0046  PHA
+    0047  LDA index
+    0049  STA $6DE0
+    004B  LDA #(line_length)
+    004D  STA $6DE1
+    004F  JSR mod
+    0051  STA mod_val
+    0053  LDA #(line_length)
+    0055  SUB mod_val
+    0057  ADD index
+    0059  STA index
+    005B  CMP #(pix_length)
+    005D  BNE check_pix_end
+    005F  LDA #0
+    0061  STA index
+    0063  CNP
+    0064  PLA
+    0065  RTS
+    0066  LDA $6DE0
+    0068  CMP $6DE1
+    006A  BCC break_mod
+    006C  SUB $6DE1
+    006E  JMP mod_loop
+    0070  RTS
+    0071  JSR new_line
+    0073  DEC index
+    0075  JMP set_char_end
+    0077  DEC index
+    0079  LDA #0
+    007B  STA $6DE0
+    007D  JSR set_char
+    007F  DEC index
+    0081  JMP set_char_end
+` $4C00
+.cts_player_pos   5A08
+.cts_star_pos   5A09
+.cts_score   5A0A
+    4C00  LDA #(cts_TITLE)
+    4C02  JSR ECHOSTR
+    4C04  JMP $5280
+    4C06  LDA #(cts_HELP)
+    4C08  JSR ECHOSTR
+    4C0A  LDA #$FE
+    4C0C  JSR ECHO
+    4C0E  LDA #$FE
+    4C10  JSR ECHO
+    4C12  LDA #10
+    4C14  STA cts_player_pos
+    4C16  LDA #100
+    4C18  STA cts_star_pos
+    4C1A  LDA #0
+    4C1C  STA cts_score
+    4C1E  JMP cts_DRAW_ALL
+    4C20  LDA KBDCR
+    4C22  BEQ cts_MAIN_LOOP
+    4C24  DEC KBDCR
+    4C26  LDA KBD
+    4C28  CMP #$57
+    4C2A  BEQ cts_MOVE_UP
+    4C2C  CMP #$53
+    4C2E  BEQ cts_MOVE_DOWN
+    4C30  CMP #$41
+    4C32  BEQ cts_MOVE_LEFT
+    4C34  CMP #$44
+    4C36  BEQ cts_MOVE_RIGHT
+    4C38  JMP cts_MAIN_LOOP
+    4C3A  LDA cts_player_pos
+    4C3C  SUB #36
+    4C3E  STA cts_player_pos
+    4C40  JMP cts_UPDATE
+    4C42  LDA cts_player_pos
+    4C44  ADD #36
+    4C46  STA cts_player_pos
+    4C48  JMP cts_UPDATE
+    4C4A  LDA cts_player_pos
+    4C4C  SUB #1
+    4C4E  STA cts_player_pos
+    4C50  JMP cts_UPDATE
+    4C52  LDA cts_player_pos
+    4C54  ADD #1
+    4C56  STA cts_player_pos
+    4C58  JMP cts_UPDATE
+    4C5A  JSR cts_CHECK_HIT
+    4C5C  JSR cts_DRAW_ALL
+    4C5E  JMP cts_MAIN_LOOP
+    4C60  LDA cts_player_pos
+    4C62  CMP cts_star_pos
+    4C64  BNE cts_NO_HIT
+    4C66  LDA cts_score
+    4C68  ADD #1
+    4C6A  STA cts_score
+    4C6C  LDA cts_star_pos
+    4C6E  ADD #17
+    4C70  AND #$00FF
+    4C72  STA cts_star_pos
+    4C74  RTS
+    4C75  CLS
+    4C76  LDA cts_player_pos
+    4C78  STA index
+    4C7A  LDA #$40
+    4C7C  JSR ECHO
+    4C7E  LDA cts_star_pos
+    4C80  STA index
+    4C82  LDA #$2A
+    4C84  JSR ECHO
+    4C86  LDA #500
+    4C88  STA index
+    4C8A  LDA #(cts_SCORE_TXT)
+    4C8C  JSR ECHOSTR
+    4C8E  LDA cts_score
+    4C90  ADD #$30
+    4C92  JSR ECHO
+    4C94  RTS
+    4C95  : "=== CATCH THE STAR ===\"
+    4C97  : "W A S D TO MOVE\"
+    4C99  : "SCORE: \"
 ` $5280
-.XAMCH   5A06
-.STCH   5A07
-.CH   5A08
-.YSAV   5A09
-.ASAV   5A0A
-.MODE   5A0B
+.XAMCH   5A0B
+.STCH   5A0C
+.CH   5A0D
+.YSAV   5A0E
+.ASAV   5A0F
+.MODE   5A10
 .IN = $5000
-.KBD   5A0C
-.KBDCR   5A0D
-.A_temp   5A0E
+.KBD   5A11
+.KBDCR   5A12
+.A_temp   5A13
     5280  CLS
     5281  LDY #$FFFF
     5283  CMP #$FF
@@ -86,8 +182,8 @@
     5289  BEQ ESCAPE
     528B  INY
     528C  BCC NEXTCHAR
-    528E  LDA #02
-    5290  JSR ECHO
+    528E  LDA #(WELCOME_STR)
+    5290  JSR ECHOSTR
     5292  LDA #$FE
     5294  JSR ECHO
     5296  LDY #1
@@ -194,11 +290,17 @@
     535A  JSR print_char
     535C  LDA A_temp
     535E  RTS
-    535F  LDA #1
-    5361  STA KBDCR
-    5363  LDA $6F00
-    5365  STA KBD
+    535F  STA A_temp
+    5361  LDA A_temp
+    5363  STA $6DE0
+    5365  JSR print_str
     5367  RTS
+    5368  : "WELCOME TO WOZMON\"
+    536A  LDA #1
+    536C  STA KBDCR
+    536E  LDA $6F00
+    5370  STA KBD
+    5372  RTS
 ` $5900
     5900  JMP ECHO
 ` $6DF0

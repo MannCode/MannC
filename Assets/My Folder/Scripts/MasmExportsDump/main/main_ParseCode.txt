@@ -1,8 +1,11 @@
-    0000  LDA #00
-    0002  TAX
-    0003  JSR start
-    0005  INX
-    0006  CMP #$4A
-    0008  BCS start
-    000A  TXA
-    000B  JMP loop
+.rndnum   5A00
+    0000  LDA #$3F56
+    0002  STA rndnum
+    0004  JSR rand16
+    0006  JMP loop
+    0008  LDA rndnum
+    000A  SLA #1
+    000C  BCC no_xor
+    000E  XOR #$B400
+    0010  STA rndnum
+    0012  RTS

@@ -345,6 +345,20 @@ public class Assembler : MonoBehaviour
             if(temp[0][0] == '.' || temp[0][0] == '`') {
                 uShortPerLine.Add(0);
             }
+            else if(temp[0][0] == ':')
+            {
+                if(temp[1][0].ToString() == "\"") {
+                    //its a string variable
+                    // join string
+                    string str = string.Join(" ", temp[1..]);
+                    uShortPerLine.Add(str.Length - 2); // remove the quotes
+                }
+                else {
+                    Debug.Log(temp.Length-1);
+                    //its a normal variable
+                    uShortPerLine.Add(temp.Length - 1);
+                }
+            }
             else if(temp.Length == 1) {
                 uShortPerLine.Add(1);
             }
@@ -366,6 +380,7 @@ public class Assembler : MonoBehaviour
     void parseCode() {
         for(int i=0; i < ParseCode.Count; i++) {
             string ln = ParseCode[i];
+            // ignore line between "" because they are string variables
             string[] temp = Regex.Split(ln, @" |,");
             string instruction = temp[0];
             if(temp[0][0] == '.') {
@@ -388,10 +403,55 @@ public class Assembler : MonoBehaviour
             }
 
             if(temp[0][0] == ':') {
-                //its a direct memory code to store shorts directly inside memory
-                for(int j=1; j < temp.Length; j++) {
-                    ushort val = getDecimalVal(temp[j]);
-                    code.Add(val);
+                // direct memory code
+                if(temp[1][0].ToString() == "\"")
+                {
+                    // direct memory code to store a string
+                    // 0-9 -> 0xA-0x13
+                    // A-Z -> 0x2A-0x43
+                    // "." -> 0x49 , ":" -> 0x4A, " " -> 0x00
+
+                    // join all the temps after temp[0] to get the full string (because string can contain spaces)
+                    string str = string.Join(" ", temp[1..]);
+                    str = str[1..^1]; // remove the quotes
+                    foreach(char ch in str) {
+                        if(ch >= '0' && ch <= '9') {
+                            code.Add((ushort)(0xA + (ch - '0')));
+                        }
+                        else if(ch >= 'A' && ch <= 'Z') {
+                            code.Add((ushort)(0x2A + (ch - 'A')));
+                        }
+                        else if(ch == '.') {
+                            code.Add(0x49);
+                        }
+                        else if(ch == ':') {
+                            code.Add(0x4A);
+                        }
+                        else if(ch == ' ') {
+                            code.Add(0x4E);
+                        }
+                        else if(ch == '=')
+                        {
+                            code.Add(0x21);
+                        }
+                        else if(ch == '\\') {
+                            code.Add(0x00); // end string character
+                        }
+                        else if(ch == '%')
+                        {
+                            code.Add(0xFE); // new line character
+                        }
+                        else {
+                            error("Invalid character in string: " + ch);
+                        }
+                    }
+                }
+                else {
+                    //its a direct memory code to store shorts directly inside memory
+                    for(int j=1; j < temp.Length; j++) {
+                        ushort val = getDecimalVal(temp[j]);
+                        code.Add(val);
+                    }
                 }
 
                 continue;

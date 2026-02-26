@@ -315,36 +315,43 @@ public class Emulator : MonoBehaviour
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     A = readShort(mem, address);
+                    updateFlag(A);
                     break;
                 case 0xA1: //LDA (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     A = readShort(mem, (ushort)(address + X));
+                    updateFlag(A);
                     break;
                 case 0xA2: //LDA (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     A = readShort(mem, (ushort)(address + Y));
+                    updateFlag(A);
                     break;
                 case 0xA4: //LDX (indirect), 0
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     X = readShort(mem, address);
+                    updateFlag(X);
                     break;
                 case 0xA5: //LDX (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     X = readShort(mem, (ushort)(address + Y));
+                    updateFlag(X);
                     break;
                 case 0xA8: //LDY (indirect), 0
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     Y = readShort(mem, address);
+                    updateFlag(Y);
                     break;
                 case 0xA9: //LDY (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
                     Y = readShort(mem, (ushort)(address + X));
+                    updateFlag(Y);
                     break;
 
 
@@ -806,12 +813,35 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0xAC: //SLA
                     val = fetchShort(mem);
+                    if(A >> (16 - val) != 0)
+                    {
+                        F_C = true;
+                    }
+                    else F_C = false;
+
                     A = (ushort)(A << val);
-                    updateFlag(A);
+                    
+                    if(A == 0)
+                    {
+                        F_Z = true;
+                    }
+                    else F_Z = false;
                     break;
                 case 0xB0: //SRA
                     val = fetchShort(mem);
+                    if((A & (1 << (val - 1))) != 0)
+                    {
+                        F_C = true;
+                    }
+                    else F_C = false;
+                    
                     A = (ushort)(A >> val);
+                    
+                    if(A == 0)
+                    {
+                        F_Z = true;
+                    }
+                    else F_Z = false;
                     updateFlag(A);
                     break;
                 case 0xfffc: //CLS

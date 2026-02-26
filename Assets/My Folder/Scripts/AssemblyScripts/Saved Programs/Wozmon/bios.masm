@@ -6,9 +6,24 @@
 .line_length = 36
 .pix_length = 648
 .val
+.str_char
+.str_msg
 
 start:
-    JMP $5280
+    JMP $4C00
+
+~print_str 1 {  ; Print string on screen
+    LDA ^1
+    STA str_msg
+print_str_loop:
+    LDA [str_msg], X
+    BEQ print_str_done
+    STA str_char
+    @print_char str_char
+    INX
+    JMP print_str_loop
+print_str_done:
+}
 
 ~print_char 1 {  ; Print char on the current position and increment cursor
     @set_char ^1

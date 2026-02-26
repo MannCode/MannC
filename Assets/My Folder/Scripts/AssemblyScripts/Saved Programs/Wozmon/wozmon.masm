@@ -28,8 +28,8 @@ NOTCR:
     INY
     BCC NEXTCHAR    ; Auto ESC if OFB
 ESCAPE:
-    LDA #02       ; print square
-    JSR ECHO
+    LDA #(WELCOME_STR)       ; print square
+    JSR ECHOSTR
 GETLINE:
     LDA #$FE
     JSR ECHO
@@ -166,6 +166,14 @@ ECHO:
     LDA A_temp
     RTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ECHOSTR:
+    STA A_temp
+    @print_str A_temp
+    RTS
+
+WELCOME_STR:
+    : "WELCOME TO WOZMON\"
 
 intrupt:
     LDA #1
