@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "MannC.slnx"
+    "dotnet.defaultSolution": "MannC.slnx",
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }

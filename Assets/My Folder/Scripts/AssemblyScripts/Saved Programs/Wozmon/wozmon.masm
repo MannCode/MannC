@@ -58,14 +58,14 @@ NEXTITEM:
     LDA [IN, Y]     ; Get character
     CMP #$FE        ; CR?
     BEQ GETLINE     ; Yes, done this line.
-    CMP #$4E         ; [space]?
+    CMP #$4E        ; [space]?
     BEQ BLSKIP      ; Skip delimiter
     CMP #$48        ; "."?
     BEQ SETMODE     ; Set BLOCK XAM mode
     CMP #$4A        ; ":"?
     BEQ SETMODE     ; store mode
     CMP #$3B        ; "R"?
-;   BEQ RUN         ; Run user program
+    BEQ RUN         ; Run user program
     STX CH          ; $00->CH
     STY YSAV        ; Save Y for comparison
 NEXTHEX:
@@ -96,13 +96,16 @@ NOTHEX:
     LDA MODE
     CMP #$4A        ; MODE != 4A (STOR)
     BNE NOTSTOR
-
+    LDA CH          ; Load character
+    STA [STCH], 0   ; Store character in 'store index'
+    INC STCH
 TONEXTITEM:
     JMP NEXTITEM
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 RUN:
-    JMP #$00
+    JSR [XAMCH], 0     ; Jump to examin index
+    JMP ESCAPE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 NOTSTOR:
@@ -160,6 +163,7 @@ ECHO:
 ; This code display the character
     STA A_temp
     @print_char A_temp
+    LDA A_temp
     RTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -169,3 +173,6 @@ intrupt:
     LDA $6F00
     STA KBD
     RTS
+
+` $5900
+    JMP ECHO

@@ -1,10 +1,11 @@
-.line
-.col
-
 start:
-    LDA #50
-    STA line
-    LDA #10
-    STA col
+    LDA #00
+    TAX
 
-#link "loop"
+loop:
+    JSR start
+    INX
+    CMP #$4A
+    BCS start
+    TXA
+    JMP loop

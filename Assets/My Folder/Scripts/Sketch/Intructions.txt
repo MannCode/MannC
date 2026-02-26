@@ -104,8 +104,16 @@
 %011100XX:$70: DEY^ -> "DEC Y"
 
 == Jump ==
-%011101XX:$75: JMP -> "Jump to a mem address"
-%011110XX:$79: JSR -> "jump to subroutine setting stack"
+%011101XX: JMP^ -> "Jump to ->"
+    %01: $75 : "address"
+    %10: $76 : "[Indirect], 0"
+    %11: $77 : "[Indirect], X"
+    
+== Jump to subroutine ==
+%011110XX: JSR^ -> "jump to subroutine setting stack"
+    %01: $79 : "address"
+    %10: $7A : "[Indirect], 0"
+    %11: $7B : "[Indirect], X"
 %011111XX:$7C: RTS -> "return to subroutine resetting stack"
 
 == Condition Jump/Branches ==
@@ -144,7 +152,8 @@
     %00 : $B0 : "Imitidate"
 
 == CLEAR Screen ==
-$FFFD: CLS -> "CLEAR screen:
+$FFFC: CLS -> "CLEAR screen and deletes old pages"
+$FFFD: CNP -> "Clear Screen to new page and store the old page"
 
 == Display ==
 $FFFE: DUP -> "Update Diplay"

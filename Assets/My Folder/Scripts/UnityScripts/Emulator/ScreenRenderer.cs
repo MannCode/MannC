@@ -6,6 +6,7 @@ using System.Threading;
 using UnityEngine.Rendering;
 using System.IO;
 using System.Text;
+using TMPro;
 
 public class ScreenRenderer : MonoBehaviour
 {
@@ -33,6 +34,10 @@ public class ScreenRenderer : MonoBehaviour
     public string bitmapFilePath; //"../BitMapGenerator/Bitmap_bin.bin";
     
     public int[][][] bitmap;
+    public int[][] bitmapScreenBackup;
+    public int currentScreenIndex = 0;
+    public int totalScreens = 1;
+    public bool isHomeScreen = true;
 
     // all 0
     // public int[][] bitmap1 = new int[8][] {
@@ -84,8 +89,12 @@ public class ScreenRenderer : MonoBehaviour
                 }
             }
         }
-    }
 
+        // initialize bitmapScreenBackup
+        bitmapScreenBackup = new int[1][];
+        bitmapScreenBackup[0] = new int[(texture.width/bitmapWidth) * (texture.height/bitmapHeight)];
+    }
+    
     // Update is called once per frame
     public void Update()
     {
@@ -96,6 +105,15 @@ public class ScreenRenderer : MonoBehaviour
                 UpdateEachPixel();
             }
         }
+
+        //check for input to navigate through screen backups
+        if(Input.GetKeyDown(KeyCode.UpArrow)) {
+            navigateScreenBackup(-1);
+        } else if(Input.GetKeyDown(KeyCode.DownArrow)) {
+            navigateScreenBackup(1);
+        }
+
+        // Debug.Log(bitmapScreenBackup.Length);
     }
 
     public void UpdateEachPixel()
@@ -139,5 +157,80 @@ public class ScreenRenderer : MonoBehaviour
         }
         updateScreen = false;
         texture.Apply();
+    }
+
+    public void storeCurrentScreenBackup() {
+        // store the current state of bitmap in new index of bitmapScreenBackup
+        // bitmap[index of screen backup][index of bitmap pixel]
+        mem = emu.mem_Backup;
+
+        int bitmapCountX = texture.width/bitmapWidth;
+        int bitmapCountY = texture.height/bitmapHeight;
+
+        if(currentScreenIndex >= bitmapScreenBackup.Length)
+        {
+            // create new bitmapScreenBackup with size + 1
+            int[][] newBitmapScreenBackup = new int[bitmapScreenBackup.Length + 1][];
+            for(int i=0; i < bitmapScreenBackup.Length; i++) {
+                newBitmapScreenBackup[i] = bitmapScreenBackup[i];
+            }
+            newBitmapScreenBackup[newBitmapScreenBackup.Length - 1] = new int[bitmapCountX * bitmapCountY];
+            bitmapScreenBackup = newBitmapScreenBackup;
+        }
+
+        
+        int index = 0x7000;
+
+        for(int y=bitmapCountY-1; y >= 0; y--)
+        {
+            for(int x=0; x < bitmapCountX; x++)
+            {
+                bitmapScreenBackup[currentScreenIndex][(bitmapCountY-1-y)*bitmapCountX + x] = mem.Data[index];
+                index++;
+            }
+        }
+    }
+
+    // use up and down arror keys to navigate through the screen backups
+    public void navigateScreenBackup(int direction)
+    {
+        if(bitmapScreenBackup == null || bitmapScreenBackup.Length == 0) {
+            return;
+        }
+
+        if(currentScreenIndex + direction < 0 || currentScreenIndex + direction >= bitmapScreenBackup.Length) {
+            return;
+        }
+
+        storeCurrentScreenBackup();
+
+        currentScreenIndex += direction;
+        // isCurrent = false;
+
+        // if(currentScreenIndex == bitmapScreenBackup.Length) {
+        //     isCurrent = true;
+        // }
+
+        int index = 0x7000;
+        int bitmapCountX = texture.width/bitmapWidth;
+        int bitmapCountY = texture.height/bitmapHeight;
+        for(int y=bitmapCountY-1; y >= 0; y--)
+        {
+            for(int x=0; x < bitmapCountX; x++)
+            {
+                mem.Data[index] = (ushort)bitmapScreenBackup[currentScreenIndex][(bitmapCountY-1-y)*bitmapCountX + x];
+                index++;
+            }
+        }
+        updateScreen = true;
+        isHomeScreen = false;
+    }
+
+    public void deleteBackupScreens() {
+        bitmapScreenBackup = new int[1][];
+        bitmapScreenBackup[0] = new int[(texture.width/bitmapWidth) * (texture.height/bitmapHeight)];
+        currentScreenIndex = 0;
+        totalScreens = 1;
+        isHomeScreen = true;
     }
 }

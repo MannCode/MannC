@@ -9,7 +9,7 @@ using Unity.Mathematics;
 using System.Text;
 using System.Threading;
 using Unity.VisualScripting;
-using UnityEngine.InputSystem;  
+using UnityEngine.InputSystem;
 
 public class Emulator : MonoBehaviour
 {
@@ -17,25 +17,30 @@ public class Emulator : MonoBehaviour
     public ScreenRenderer screenRenderer;
 
     public Toggle toggle;
-    
 
-    public struct MEM {
+
+    public struct MEM
+    {
         public static int maxMem = 65536;
         private ushort[] _data;
-        public ushort[] Data {
+        public ushort[] Data
+        {
             get { return _data; }
             set { _data = value; }
         }
 
-        public MEM(ushort[] Data) {
+        public MEM(ushort[] Data)
+        {
             _data = Data;
         }
 
-        public ushort[] getMemory(string f) {
+        public ushort[] getMemory(string f)
+        {
             BinaryReader reader = new BinaryReader(File.Open(f, FileMode.Open), Encoding.UTF8);
             ushort[] _Data = new ushort[maxMem];
             int i = 0;
-            while (reader.BaseStream.Position != reader.BaseStream.Length) {
+            while (reader.BaseStream.Position != reader.BaseStream.Length)
+            {
                 _Data[i] = reader.ReadUInt16();
                 i++;
             }
@@ -45,7 +50,8 @@ public class Emulator : MonoBehaviour
     }
 
 
-    public struct CPU {
+    public struct CPU
+    {
         public ushort PC;
         public ushort SP;
         public ushort A;
@@ -55,9 +61,10 @@ public class Emulator : MonoBehaviour
         public bool F_Z;
         public bool HLT;
 
-        
 
-        public void reset() {
+
+        public void reset()
+        {
             PC = 0x00;
             SP = 0x6FFE;
             A = X = Y = 0;
@@ -83,53 +90,69 @@ public class Emulator : MonoBehaviour
         //     return mem.Data[address];
         // }
 
-        public ushort readShort(MEM mem, ushort address) {
+        public ushort readShort(MEM mem, ushort address)
+        {
             // ushort code = (ushort)(mem.Data[address] << 8 | mem.Data[address+1]);
             ushort code = mem.Data[address];
             return code;
         }
 
-        public void writeShort(MEM mem, ushort address, ushort value) {
+        public void writeShort(MEM mem, ushort address, ushort value)
+        {
             mem.Data[address] = value;
         }
 
-        public void updateFlag(int val) {
-            if(val > 0xFFFF || val < 0) {
+        public void updateFlag(int val)
+        {
+            if (val > 0xFFFF || val < 0)
+            {
                 F_C = true;
-            }else F_C = false;
-            if(val == 0) {
+            }
+            else F_C = false;
+            if (val == 0)
+            {
                 F_Z = true;
-            }else F_Z = false;
+            }
+            else F_Z = false;
         }
-        
-        public void decStack() {
-            if(SP == 0x6F00) SP = 0x6FFE;
+
+        public void decStack()
+        {
+            if (SP == 0x6F00) SP = 0x6FFE;
             else SP--;
         }
 
-        public void incStack() {
-            if(SP == 0x6FFE) SP = 0x6F00;
+        public void incStack()
+        {
+            if (SP == 0x6FFE) SP = 0x6F00;
             else SP++;
         }
 
-        public void PushStackShort(MEM mem, ushort val) {
+        public void PushStackShort(MEM mem, ushort val)
+        {
             writeShort(mem, SP, val);
             decStack();
         }
 
-        public ushort PullStackShort(MEM mem) {
+        public ushort PullStackShort(MEM mem)
+        {
             incStack();
             return readShort(mem, SP);
         }
 
-        public void UpdateHLT() {
-            if(HLT) {
+        public void UpdateHLT()
+        {
+            if (HLT)
+            {
                 HLT = false;
-            }else HLT = true;
+            }
+            else HLT = true;
         }
 
-        public int getBitMapCode(KeyCode kcode) {
-            switch(kcode) {
+        public int getBitMapCode(KeyCode kcode)
+        {
+            switch (kcode)
+            {
                 case KeyCode.Alpha0:
                     return 10;
                 case KeyCode.Alpha1:
@@ -168,7 +191,7 @@ public class Emulator : MonoBehaviour
                     return 49;
                 case KeyCode.I:
                     return 50;
-                case KeyCode.J: 
+                case KeyCode.J:
                     return 51;
                 case KeyCode.K:
                     return 52;
@@ -214,7 +237,8 @@ public class Emulator : MonoBehaviour
         }
 
 
-        public void execute(CPU cpu, MEM mem, MEM mem_Backup, ScreenRenderer sc,ref bool intrupt) {
+        public void execute(CPU cpu, MEM mem, MEM mem_Backup, ScreenRenderer sc, ref bool intrupt)
+        {
             if (intrupt)
             {
                 intrupt = false;
@@ -232,7 +256,8 @@ public class Emulator : MonoBehaviour
             ushort val;
             int int_val;
 
-            switch(instruction) {
+            switch (instruction)
+            {
                 case 0x0: //NOP
                     break;
 
@@ -294,12 +319,12 @@ public class Emulator : MonoBehaviour
                 case 0xA1: //LDA (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    A = readShort(mem, (ushort)(address+X));
+                    A = readShort(mem, (ushort)(address + X));
                     break;
                 case 0xA2: //LDA (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    A = readShort(mem, (ushort)(address+Y));
+                    A = readShort(mem, (ushort)(address + Y));
                     break;
                 case 0xA4: //LDX (indirect), 0
                     address = fetchShort(mem);
@@ -309,7 +334,7 @@ public class Emulator : MonoBehaviour
                 case 0xA5: //LDX (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    X = readShort(mem, (ushort)(address+Y));
+                    X = readShort(mem, (ushort)(address + Y));
                     break;
                 case 0xA8: //LDY (indirect), 0
                     address = fetchShort(mem);
@@ -319,7 +344,7 @@ public class Emulator : MonoBehaviour
                 case 0xA9: //LDY (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    Y = readShort(mem, (ushort)(address+X));
+                    Y = readShort(mem, (ushort)(address + X));
                     break;
 
 
@@ -329,11 +354,11 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x12: //STA (address+X)
                     address = fetchShort(mem);
-                    writeShort(mem, (ushort)(address+X), A);
+                    writeShort(mem, (ushort)(address + X), A);
                     break;
                 case 0x13: //STA (address+Y)
                     address = fetchShort(mem);
-                    writeShort(mem, (ushort)(address+Y), A);
+                    writeShort(mem, (ushort)(address + Y), A);
                     break;
                 case 0x15: //STX address
                     address = fetchShort(mem);
@@ -341,7 +366,7 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x17: //STX (address+Y)
                     address = fetchShort(mem);
-                    writeShort(mem, (ushort)(address+Y), X);
+                    writeShort(mem, (ushort)(address + Y), X);
                     break;
                 case 0x19: //STY address
                     address = fetchShort(mem);
@@ -349,7 +374,7 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x1A: //STY (address+X)
                     address = fetchShort(mem);
-                    writeShort(mem, (ushort)(address+X), Y);
+                    writeShort(mem, (ushort)(address + X), Y);
                     break;
                 case 0x94: //STA (indirect), 0
                     address = fetchShort(mem);
@@ -359,12 +384,12 @@ public class Emulator : MonoBehaviour
                 case 0x95: //STA (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    writeShort(mem, (ushort)(address+X), A);
+                    writeShort(mem, (ushort)(address + X), A);
                     break;
                 case 0x96: //STA (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    writeShort(mem, (ushort)(address+Y), A);
+                    writeShort(mem, (ushort)(address + Y), A);
                     break;
                 case 0x98: //STX (indirect), 0
                     address = fetchShort(mem);
@@ -374,7 +399,7 @@ public class Emulator : MonoBehaviour
                 case 0x99: //STX (indirect),Y
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    writeShort(mem, (ushort)(address+Y), X);
+                    writeShort(mem, (ushort)(address + Y), X);
                     break;
                 case 0x9C: //STY (indirect), 0
                     address = fetchShort(mem);
@@ -384,7 +409,7 @@ public class Emulator : MonoBehaviour
                 case 0x9D: //STY (indirect),X
                     address = fetchShort(mem);
                     address = readShort(mem, address);
-                    writeShort(mem, (ushort)(address+X), Y);
+                    writeShort(mem, (ushort)(address + X), Y);
                     break;
 
                 case 0x1C: //TAX
@@ -405,7 +430,7 @@ public class Emulator : MonoBehaviour
                     break;
 
                 case 0x2C: //TSX
-                    X = (ushort)(8<<SP);
+                    X = (ushort)(8 << SP);
                     updateFlag(X);
                     break;
                 case 0x30: //TXS
@@ -431,12 +456,12 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x3E: //AND (address+X)
                     address = fetchShort(mem);
-                    A = (ushort)(A & readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A & readShort(mem, (ushort)(address + X)));
                     updateFlag(A);
                     break;
                 case 0x3F: //AND (address+Y)
                     address = fetchShort(mem);
-                    A = (ushort)(A & readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A & readShort(mem, (ushort)(address + Y)));
                     updateFlag(A);
                     break;
                 case 0x40: //OR imidiate
@@ -451,12 +476,12 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x42: //OR (address+X)
                     address = fetchShort(mem);
-                    A = (ushort)(A | readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A | readShort(mem, (ushort)(address + X)));
                     updateFlag(A);
                     break;
                 case 0x43: //OR (address+Y)
                     address = fetchShort(mem);
-                    A = (ushort)(A | readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A | readShort(mem, (ushort)(address + Y)));
                     updateFlag(A);
                     break;
                 case 0x44: //XOR imidiate
@@ -471,15 +496,15 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x46: //XOR (address+X)
                     address = fetchShort(mem);
-                    A = (ushort)(A ^ readShort(mem, (ushort)(address+X)));
+                    A = (ushort)(A ^ readShort(mem, (ushort)(address + X)));
                     updateFlag(A);
                     break;
                 case 0x47: //XOR (address+Y)
                     address = fetchShort(mem);
-                    A = (ushort)(A ^ readShort(mem, (ushort)(address+Y)));
+                    A = (ushort)(A ^ readShort(mem, (ushort)(address + Y)));
                     updateFlag(A);
                     break;
-                
+
                 case 0x48: //ADD imidiate
                     imidiate = fetchShort(mem);
                     int_val = A + imidiate;
@@ -494,13 +519,13 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x4A: //ADD (address+X)
                     address = fetchShort(mem);
-                    int_val = A + readShort(mem, (ushort)(address+X));
+                    int_val = A + readShort(mem, (ushort)(address + X));
                     A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4B: //ADD (address+Y)
                     address = fetchShort(mem);
-                    int_val = A + readShort(mem, (ushort)(address+Y));
+                    int_val = A + readShort(mem, (ushort)(address + Y));
                     A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
@@ -518,116 +543,156 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x4E: //SUB (address+X)
                     address = fetchShort(mem);
-                    int_val = A - readShort(mem, (ushort)(address+X));
+                    int_val = A - readShort(mem, (ushort)(address + X));
                     A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x4F: //SUB (address+Y)
                     address = fetchShort(mem);
-                    int_val = A - readShort(mem, (ushort)(address+Y));
+                    int_val = A - readShort(mem, (ushort)(address + Y));
                     A = (ushort)int_val;
                     updateFlag(int_val);
                     break;
                 case 0x50: //CMP A imidiate
                     imidiate = fetchShort(mem);
                     val = imidiate;
-                    if(A>=val) {
+                    if (A >= val)
+                    {
                         F_C = true;
-                    } else F_C = false;
+                    }
+                    else F_C = false;
 
-                    if(A==val) {
+                    if (A == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x51: //CMP A address
                     address = fetchShort(mem);
                     val = readShort(mem, address);
-                    if(A>=val) {
+                    if (A >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(A==val) {
+                    }
+                    else F_C = false;
+                    if (A == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x52: //CMP A (address+X)
                     address = fetchShort(mem);
-                    val = readShort(mem, (ushort)(address+X));
-                    if(A>=val) {
+                    val = readShort(mem, (ushort)(address + X));
+                    if (A >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(A==val) {
+                    }
+                    else F_C = false;
+                    if (A == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x53: //CMP A (address+Y)
                     address = fetchShort(mem);
-                    val = readShort(mem, (ushort)(address+Y));
-                    if(A>=val) {
+                    val = readShort(mem, (ushort)(address + Y));
+                    if (A >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(A==val) {
+                    }
+                    else F_C = false;
+                    if (A == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x54: //CMP X imidiate
                     imidiate = fetchShort(mem);
                     val = imidiate;
-                    if(X>=val) {
+                    if (X >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(X==val) {
+                    }
+                    else F_C = false;
+                    if (X == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x55: //CMP X address
                     address = fetchShort(mem);
                     val = readShort(mem, address);
-                    if(X>=val) {
+                    if (X >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(X==val) {
+                    }
+                    else F_C = false;
+                    if (X == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x57: //CMP X (address+Y)
                     address = fetchShort(mem);
-                    val = readShort(mem, (ushort)(address+Y));
-                    if(X>=val) {
+                    val = readShort(mem, (ushort)(address + Y));
+                    if (X >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(X==val) {
+                    }
+                    else F_C = false;
+                    if (X == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x58: //CMP Y imidiate
                     imidiate = fetchShort(mem);
                     val = imidiate;
-                    if(Y>=val) {
+                    if (Y >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(Y==val) {
+                    }
+                    else F_C = false;
+                    if (Y == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x59: //CMP Y address
                     address = fetchShort(mem);
                     val = readShort(mem, address);
-                    if(Y>=val) {
+                    if (Y >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(Y==val) {
+                    }
+                    else F_C = false;
+                    if (Y == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
                 case 0x5A: //CMP Y (address+X)
                     address = fetchShort(mem);
-                    val = readShort(mem, (ushort)(address+X));
-                    if(Y>=val) {
+                    val = readShort(mem, (ushort)(address + X));
+                    if (Y >= val)
+                    {
                         F_C = true;
-                    }else F_C = false;
-                    if(Y==val) {
+                    }
+                    else F_C = false;
+                    if (Y == val)
+                    {
                         F_Z = true;
-                    }else F_Z = false;
+                    }
+                    else F_Z = false;
                     break;
 
                 case 0x5D: //INC address
@@ -638,14 +703,14 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x5E: //INC (address,X)
                     address = fetchShort(mem);
-                    int_val = readShort(mem, (ushort)(address+X)) + 1;
-                    writeShort(mem, (ushort)(address+X), (ushort)int_val);
+                    int_val = readShort(mem, (ushort)(address + X)) + 1;
+                    writeShort(mem, (ushort)(address + X), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x5F: //INC (address+Y)
                     address = fetchShort(mem);
-                    int_val = readShort(mem, (ushort)(address+Y)) + 1;
-                    writeShort(mem, (ushort)(address+Y), (ushort)int_val);
+                    int_val = readShort(mem, (ushort)(address + Y)) + 1;
+                    writeShort(mem, (ushort)(address + Y), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x60: //INC X
@@ -666,14 +731,14 @@ public class Emulator : MonoBehaviour
                     break;
                 case 0x6A: //DEC (address,X)
                     address = fetchShort(mem);
-                    int_val = readShort(mem, (ushort)(address+X)) - 1;
-                    writeShort(mem, (ushort)(address+X), (ushort)int_val);
+                    int_val = readShort(mem, (ushort)(address + X)) - 1;
+                    writeShort(mem, (ushort)(address + X), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x6B: //DEC (address+Y)
                     address = fetchShort(mem);
-                    int_val = readShort(mem, (ushort)(address+Y)) - 1;
-                    writeShort(mem, (ushort)(address+Y), (ushort)int_val);
+                    int_val = readShort(mem, (ushort)(address + Y)) - 1;
+                    writeShort(mem, (ushort)(address + Y), (ushort)int_val);
                     updateFlag(int_val);
                     break;
                 case 0x6C: //DEC X
@@ -686,35 +751,58 @@ public class Emulator : MonoBehaviour
                     Y = (ushort)int_val;
                     updateFlag(int_val);
                     break;
-                
+
                 case 0x75: //JMP address
                     address = fetchShort(mem);
                     PC = address;
                     break;
+                case 0x76: //JMP [indirect]
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    PC = address;
+                    break;
+                case 0x77: //JMP [indirect],X
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    PC = (ushort)(address + X);
+                    break;
+
                 case 0x79: //JSR address
                     address = fetchShort(mem);
                     PushStackShort(mem, PC);
                     PC = address;
                     break;
+                case 0x7A: //JSR [Indirect]
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    PushStackShort(mem, PC);
+                    PC = address;
+                    break;
+                case 0x7B: //JSR [Indirect],X
+                    address = fetchShort(mem);
+                    address = readShort(mem, address);
+                    PushStackShort(mem, PC);
+                    PC = (ushort)(address + X);
+                    break;
                 case 0x7C: //RTS
                     PC = PullStackShort(mem);
                     break;
-                
+
                 case 0x81: //BCC address
                     address = fetchShort(mem);
-                    if(!F_C) PC = address;
+                    if (!F_C) PC = address;
                     break;
                 case 0x85: //BCS address
                     address = fetchShort(mem);
-                    if(F_C) PC = address;
+                    if (F_C) PC = address;
                     break;
                 case 0x89: //BNE address
                     address = fetchShort(mem);
-                    if(!F_Z) PC = address;
+                    if (!F_Z) PC = address;
                     break;
                 case 0x8D: //BEQ address
                     address = fetchShort(mem);
-                    if(F_Z) PC = address;
+                    if (F_Z) PC = address;
                     break;
                 case 0xAC: //SLA
                     val = fetchShort(mem);
@@ -726,21 +814,33 @@ public class Emulator : MonoBehaviour
                     A = (ushort)(A >> val);
                     updateFlag(A);
                     break;
-                case 0xfffd: //CLS
-                    Array.Clear(mem.Data, 0x7000, 256*144);
+                case 0xfffc: //CLS
+                    sc.deleteBackupScreens();
+                    Array.Clear(mem.Data, 0x7000, 256 * 144);
+                    break;
+                case 0xfffd: //CNP (Clear to new page)
+                    sc.storeCurrentScreenBackup();
+                    sc.currentScreenIndex++;
+                    sc.totalScreens++;
+                    Array.Clear(mem.Data, 0x7000, 256 * 144);
                     break;
                 case 0xfffe: //DUP
                     Array.Copy(mem.Data, mem_Backup.Data, mem.Data.Length);
                     sc.updateScreen = true;
+                    if (!sc.isHomeScreen)
+                    {
+                        sc.currentScreenIndex = sc.bitmapScreenBackup.Length - 1;
+                        sc.isHomeScreen = true;
+                    }
                     break;
                 case 0xffff: //HLT
                     UpdateHLT();
                     break;
                 default:
-                    print("Invalid Opcode "+Convert.ToString(PC, 16)+ " " +instruction);
+                    print("Invalid Opcode " + Convert.ToString(PC, 16) + " " + instruction);
                     break;
             }
-                
+
         }
     }
 
@@ -775,7 +875,8 @@ public class Emulator : MonoBehaviour
 
     public ushort[] memDataShower;
 
-    public void Start() {
+    public void Start()
+    {
         currentsteps = 0;
         timesincecurrentstepsiszero = Time.realtimeSinceStartup;
         // Application.targetFrameRate = 500;
@@ -784,10 +885,11 @@ public class Emulator : MonoBehaviour
         cpu.HLT = true;
         cpuSpeedNoDelay.onValueChanged.AddListener(OnCputSpeedNoDelayValueChanged);
         maxSpeed.onValueChanged.AddListener(OnMaxSpeedValueChanged);
-        
+
     }
 
-    public void loadMem(string programFilePath) {
+    public void loadMem(string programFilePath)
+    {
         mem = new MEM(mem.getMemory(programFilePath));
         mem_Backup = new MEM(mem_Backup.getMemory(programFilePath));
         cpu.reset();
@@ -796,7 +898,8 @@ public class Emulator : MonoBehaviour
     }
 
 
-    public void StartCPU() {
+    public void StartCPU()
+    {
         RunCPUbool = false;
         //Get The instruction set from the file and store it in his memory
         clock_step = 0;
@@ -807,16 +910,18 @@ public class Emulator : MonoBehaviour
 
         cpu.HLT = false;
         //Run The loop
-        if(isDelay) StartCoroutine(RunCPU());
+        if (isDelay) StartCoroutine(RunCPU());
         else RunCPUbool = true;
     }
 
-    public void run1Tick() {
+    public void run1Tick()
+    {
         //Run One Instruction
-        if(!cpu.HLT && toggle.isOn)
-        cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
+        if (!cpu.HLT && toggle.isOn)
+            cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
         clock_step += 8;
-        if(cpu.PC == 0x6EFF) {
+        if (cpu.PC == 0x6EFF)
+        {
             cpu.HLT = true;
         }
     }
@@ -824,21 +929,27 @@ public class Emulator : MonoBehaviour
     public int index;
 
     int resetIndex = 300;
-    
 
-    public void Update() {
+
+    public void Update()
+    {
         int i = index;
-        if(RunCPUbool && !toggle.isOn) {
-            if(!cpu.HLT) {
-                while(i != 0) {
-                    if(toggle.isOn)
-                    break;
-                    
-                    if(!cpu.HLT) {
+        if (RunCPUbool && !toggle.isOn)
+        {
+            if (!cpu.HLT)
+            {
+                while (i != 0)
+                {
+                    if (toggle.isOn)
+                        break;
+
+                    if (!cpu.HLT)
+                    {
                         //Run One Instruction
                         cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
                         clock_step += 8;
-                        if(cpu.PC > 0x6EFF) {
+                        if (cpu.PC > 0x6EFF)
+                        {
                             cpu.HLT = true;
                         }
                     }
@@ -849,20 +960,25 @@ public class Emulator : MonoBehaviour
         }
     }
 
-    public void FixedUpdate() {
-        if(!cpu.HLT) {
-            if(rate == 0) {
+    public void FixedUpdate()
+    {
+        if (!cpu.HLT)
+        {
+            if (rate == 0)
+            {
                 float timediff = Time.realtimeSinceStartup - timesincecurrentstepsiszero;
-                if(timediff == 0) {
+                if (timediff == 0)
+                {
                     timediff = 0.00001f;
                 }
                 rate = 100;
-                frequency = (int)(currentsteps/timediff);
+                frequency = (int)(currentsteps / timediff);
             }
 
-            if(resetIndex == 0) {
+            if (resetIndex == 0)
+            {
                 currentsteps = 0;
-                timesincecurrentstepsiszero = Time.realtimeSinceStartup;            
+                timesincecurrentstepsiszero = Time.realtimeSinceStartup;
                 resetIndex = 300;
             }
             resetIndex--;
@@ -876,11 +992,14 @@ public class Emulator : MonoBehaviour
         if (string.IsNullOrWhiteSpace(newHoursValue))
             return;
 
-        if (int.TryParse(newHoursValue, out int result)) {
-            if (result < 0) {
+        if (int.TryParse(newHoursValue, out int result))
+        {
+            if (result < 0)
+            {
                 index = 0;
-            }   
-            else {
+            }
+            else
+            {
                 index = (int)(int.Parse(maxSpeed.text) * cpuSpeedNoDelay.value);
                 // if(index == 1) index = 0;
             }
@@ -892,14 +1011,18 @@ public class Emulator : MonoBehaviour
         OnMaxSpeedValueChanged(maxSpeed.text);
     }
 
-    IEnumerator RunCPU() {
-        while(true) {
-            while(!cpu.HLT && !toggle.isOn) {
+    IEnumerator RunCPU()
+    {
+        while (true)
+        {
+            while (!cpu.HLT && !toggle.isOn)
+            {
                 //Run One Instruction
                 cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
                 clock_step += 8;
-                yield return new WaitForSeconds(1/clock_speed);
-                if(cpu.PC == 0x6EFF) {
+                yield return new WaitForSeconds(1 / clock_speed);
+                if (cpu.PC == 0x6EFF)
+                {
                     cpu.HLT = true;
                 }
                 currentsteps++;

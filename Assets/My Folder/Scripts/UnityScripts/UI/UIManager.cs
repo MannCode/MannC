@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviour
     public Emulator emu;
     Emulator.CPU cpu;
     Emulator.MEM mem;
+    public ScreenRenderer sc;
     
 
     [Header("Resitors")]
@@ -30,6 +31,9 @@ public class UIManager : MonoBehaviour
     [Header("Memory")]
     public TMP_InputField m_address;
     public TMP_Text m_data;
+
+    [Header("Screen")]
+    public TMP_Text screenPageIndex;
 
     void Start() {
         // 60 fps
@@ -66,6 +70,9 @@ public class UIManager : MonoBehaviour
 
         clock.text = "Clock -> "+ clockSpeed.ToString();
         setClockSpeed.text = emu.index.ToString();
+
+        //screen
+        screenPageIndex.text = (sc.currentScreenIndex+1).ToString() + "/" + sc.totalScreens.ToString();
     }
 
     string FormatClockSpeed(float frequency)

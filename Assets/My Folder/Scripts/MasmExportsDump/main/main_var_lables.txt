@@ -1,8 +1,5 @@
 Variables:
-      line = 0x5A00
-      col = 0x5A01
-      inc = 0x5A02
 
 Lables:
-      start = 0x0002
-      loop = 0x0009
+      start = 0x0000
+      loop = 0x0003

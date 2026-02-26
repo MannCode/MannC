@@ -89,7 +89,8 @@ public class Assembler : MonoBehaviour
         {"BEQ", 0x008C},
         {"SLA", 0x00AC},
         {"SRA", 0x00B0},
-        {"CLS", 0xFFFD},
+        {"CLS", 0xFFFC},
+        {"CNP", 0xFFFD},
         {"DUP", 0xFFFE},
         {"HLT", 0xFFFF}
     };
@@ -455,6 +456,19 @@ public class Assembler : MonoBehaviour
                                 if(registor == '0') opCode = 0xA8;
                                 else if(registor == 'X' || registor == 'x') opCode = 0xA9;
                                 else error("Invalid Registor");
+                            }
+
+                            else if(instruction == "JMP")
+                            {
+                                if(registor == '0') opCode = 0x76;
+                                else if(registor == 'X' || registor == 'x') opCode = 0x77;
+                                else error("Invalid Registor for JMP");
+                            }
+                            else if(instruction == "JSR")
+                            {
+                                if(registor == '0') opCode = 0x7A;
+                                else if(registor == 'X' || registor == 'x') opCode = 0x7B;
+                                else error("Invalid Registor for JSR");
                             }
                             else error("Invalid Instruction for indirect command");
 

@@ -1,14 +1,8 @@
-.line   2000
-.col   2001
-start:
-    0000  LDA #50
-    0002  STA line
-    0004  LDA #10
-    0006  STA col
-.inc   2002
-    0008  LDA #1
-    000A  STA inc
-loop:
-    000C  LDX inc
-    000E  INC inc
-    0010  JMP loop
+    0000  LDA #00
+    0002  TAX
+    0003  JSR start
+    0005  INX
+    0006  CMP #$4A
+    0008  BCS start
+    000A  TXA
+    000B  JMP loop
