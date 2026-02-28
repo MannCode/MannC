@@ -1,16 +1,30 @@
+; ======================================
+;   CUSTOM BIOS FOR MANN 16-BIT
+; ======================================
+
 .line
 .col
 .index
 .indexStart = $7000
 .actual_index
-.line_length = 36
+.sc_width = 36
+.sc_height = 18
 .pix_length = 648
 .val
 .str_char
 .str_msg
 
+; keyboard
+.KBD                ; Keyboard input
+.KBDCR              ; keyboard control register
+
+; multiply
+.mul_temp
+.mul_counter
+.mul_result
+
 start:
-    JMP $4C00
+    JMP $5280
 
 ~print_str 1 {  ; Print string on screen
     LDA ^1
@@ -23,6 +37,7 @@ print_str_loop:
     INX
     JMP print_str_loop
 print_str_done:
+    LDX #0
 }
 
 ~print_char 1 {  ; Print char on the current position and increment cursor
@@ -35,8 +50,8 @@ print_str_done:
     ADD #(indexStart)
     STA actual_index
     CMP #$7288
-    BCS clear_screen
-clear_screen_end:
+    BCS cls_bios
+sc_cls_end:
     LDA ^1
     CMP #$FE                    ; CR?
     BEQ return_bios
@@ -55,14 +70,19 @@ clear_screen:
     STA index
     LDA #(indexStart)
     STA actual_index
-    JMP clear_screen_end
+    DUP
+    RTS
+
+cls_bios:
+    JSR clear_screen
+    JMP sc_cls_end
 
 new_line:
 .mod_val
     PHA
-    @mod index #(line_length)
+    @mod index #(sc_width)
     STA mod_val
-    LDA #(line_length)
+    LDA #(sc_width)
     SUB mod_val
     ADD index
     STA index
@@ -75,6 +95,39 @@ check_pix_end:
     PLA
     RTS
 
+return_bios:
+    JSR new_line
+    DEC index
+    JMP set_char_end
+
+backspace_bios:
+    DEC index
+    @set_char #0
+    DEC index
+    JMP set_char_end
+
+
+~multiply 0 {   ; multiply two numbers (A * X)
+    STA mul_temp
+    STX mul_counter
+
+    LDA #0
+    STA mul_result
+
+mul_loop:
+    LDA mul_counter
+    BEQ mul_end        ; if counter = 0 --> done
+
+    LDA mul_result
+    ADD mul_temp
+    STA mul_result      ; result += multiplicand
+
+    DEC mul_counter     ; counter--
+    JMP mul_loop
+mul_end:
+    LDA mul_result      ; return with A = result
+}
+
 ~mod 2 {
 ; A, B
     LDA ^1
@@ -86,16 +139,18 @@ mod_loop:
 break_mod:
 }
 
-return_bios:
-    JSR new_line
-    DEC index
-    JMP set_char_end
-
-backspace_bios:
-    DEC index
-    @set_char #0
-    DEC index
-    JMP set_char_end
+~wait 1 {
+    LDX ^1
+wait_loop:
+    DEX
+    BEQ wait_end
+    NOP
+    NOP
+    NOP
+    NOP
+    JMP wait_loop
+wait_end:
+}
 
 #link "main"
 

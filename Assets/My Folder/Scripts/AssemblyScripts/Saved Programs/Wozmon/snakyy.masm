@@ -1,0 +1,389 @@
+; ======================================
+; CTS - CATCH THE STAR - MINI GAME
+; for MANN-16Bit + BIOS + WOZMON
+; ======================================
+
+
+; Variables
+; apple, score
+.cts_apple_pos
+.cts_score
+
+; snake
+.cts_snake_head_x           ; x position of head
+.cts_snake_head_y           ; y position of head
+.cts_snake_head_pos         ; index pos of head
+.cts_snake_direction        ; direction: 0 - STOP, 1-UP, 2-RIGHT, 3-DOWN, 4-LEFT
+.cts_snake_direction_next
+
+; snake body
+.cts_arr_snk_body_x = $4500         ; arr storage for snake body x
+.cts_arr_snk_body_y = $4800         ; arr stoage for snake body y
+.cts_snk_body_len                   ; len for both arr
+.cts_snk_body_tail_x               
+.cts_snk_body_tail_y                ; backup for last element (tail) of snake
+
+
+; update delay
+.cts_snake_update_delay = 30000
+.cts_snake_update_delay_i
+
+; temp
+.cts_A_temp
+
+
+cts_MAIN_MENU:
+    JSR clear_screen
+    ; Print title
+    LDA #(cts_TITLE)
+    JSR ECHOSTR
+
+    LDA #(cts_HELP)
+    JSR ECHOSTR
+
+cts_MAIN_MENU_LOOP:
+    LDA KBDCR
+    BEQ cts_MAIN_MENU_LOOP
+
+    DEC KBDCR
+    LDA KBD
+
+    CMP #$B      ; '1' 
+    BEQ cts_GAME_START
+    CMP #$C      ; '2'
+    BEQ cts_GAME_END
+    JMP cts_MAIN_MENU_LOOP
+
+cts_GAME_START:
+    ; init snake positions
+    LDA #17          ; middle
+    STA cts_snake_head_x
+    LDA #9
+    STA cts_snake_head_y
+    LDA #(36*9+17)
+    STA cts_snake_head_pos
+
+    LDA #0
+    STA cts_snake_direction
+    STA cts_snake_direction_next
+
+    ; hardcode snk body values
+    LDA #2
+    STA cts_snk_body_len
+    LDX cts_snake_head_x
+    DEX
+    STX cts_arr_snk_body_x
+    DEX
+    STX (cts_arr_snk_body_x+1)
+    LDA cts_snake_head_y
+    STA cts_arr_snk_body_y
+    STA (cts_arr_snk_body_y+1)
+
+    LDA #100
+    STA cts_apple_pos
+    JSR cts_RESPAWN_APPLE
+
+    LDA #0
+    STA cts_score
+
+    LDA #(cts_snake_update_delay)
+    STA cts_snake_update_delay_i
+
+    JSR cts_DRAW_ALL
+
+; Main Loop
+cts_MAIN_LOOP:
+    ; udpate snake [GAME] (after delay)
+    DEC cts_snake_update_delay_i
+    BEQ cts_UPDATE_SNAKE
+
+    LDA KBDCR
+    BEQ cts_MAIN_LOOP
+
+    ; key pressed
+    DEC KBDCR
+    LDA KBD
+
+    CMP #64      ; 'W'
+    BEQ cts_TURN_UP
+    CMP #60      ; 'S'
+    BEQ cts_TURN_DOWN
+    CMP #42      ; 'A'
+    BEQ cts_TURN_LEFT
+    CMP #45      ; 'D'
+    BEQ cts_TURN_RIGHT
+    CMP #57      ; 'P'
+    BEQ cts_MAIN_MENU
+    JMP cts_MAIN_LOOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; TURN logic
+cts_TURN_UP:
+    LDA cts_snake_direction
+    CMP #3              ; if DOWN dont turn
+    BEQ cts_MAIN_LOOP
+    LDA #1
+    STA cts_snake_direction_next
+    JMP cts_MAIN_LOOP
+cts_TURN_RIGHT:
+    LDA cts_snake_direction
+    CMP #4              ; if LEFT dont turn
+    BEQ cts_MAIN_LOOP
+    LDA #2
+    STA cts_snake_direction_next
+    JMP cts_MAIN_LOOP
+cts_TURN_DOWN:
+    LDA cts_snake_direction
+    CMP #1              ; if UP dont turn
+    BEQ cts_MAIN_LOOP
+    LDA #3
+    STA cts_snake_direction_next
+    JMP cts_MAIN_LOOP
+cts_TURN_LEFT:
+    LDA cts_snake_direction
+    BEQ cts_TURN_RIGHT   ; if stopped, move right
+    CMP #2              ; if RIGHT dont turn
+    BEQ cts_MAIN_LOOP
+    LDA #4
+    STA cts_snake_direction_next
+    JMP cts_MAIN_LOOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Update Logic
+
+cts_UPDATE_SNAKE:
+    ; reset delay timer
+    LDA #(cts_snake_update_delay)
+    STA cts_snake_update_delay_i
+
+    ; udpate the direction
+    LDA cts_snake_direction_next
+    STA cts_snake_direction
+
+    ; backup the tail of snake
+    LDX cts_snk_body_len
+    BEQ cts_SNK_TAIL_BAKUP_END      ; no tail
+    DEX
+    LDA [cts_arr_snk_body_x, X]
+    STA cts_snk_body_tail_x
+    LDA [cts_arr_snk_body_y, X]
+    STA cts_snk_body_tail_y
+cts_SNK_TAIL_BAKUP_END:
+    ; move snake body
+    JSR cts_UPDATE_SNAKE_BODY
+    
+    ; move snake
+    LDA cts_snake_direction
+    BEQ cts_MAIN_LOOP
+    CMP #1
+    BEQ cts_MOVE_UP
+    CMP #2
+    BEQ cts_MOVE_RIGHT
+    CMP #3
+    BEQ cts_MOVE_DOWN
+    CMP #4
+    BEQ cts_MOVE_LEFT
+cts_MOVE_SNAKE_END:
+
+    JSR cts_CHECK_HIT
+
+    ; update snake pos var
+    LDA #36
+    LDX cts_snake_head_y
+    @multiply
+    ADD cts_snake_head_x        ; pos = 36*y+x
+    STA cts_snake_head_pos
+
+    JSR cts_DRAW_ALL
+    JMP cts_MAIN_LOOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+cts_UPDATE_SNAKE_BODY:
+    ; update all the positions
+
+    LDX cts_snk_body_len
+    BEQ cts_UPDATE_SNAKE_BODY_END       ; len = 0, no loop, no snake body
+    DEX                 ; start with len-1
+    BEQ cts_UPDATE_SNAKE_BODY_LOOP_END       ; len = 1, no loop, move body to head
+cts_UDPATE_SNAKE_BODY_LOOP:
+    DEX                             ; i-1
+    LDA [cts_arr_snk_body_x, X]     ; reg A = arr_x[i-1]
+    LDY [cts_arr_snk_body_y, X]     ; reg Y = arr_y[i-1]
+    INX
+    STA [cts_arr_snk_body_x, X]     ; arr_x[i] = reg A
+    STY [cts_arr_snk_body_y, X]     ; arr_y[i] = reg Y
+
+    DEX
+    BEQ cts_UPDATE_SNAKE_BODY_LOOP_END                ; if x = 0; looped len-1 -> 1
+    JMP cts_UDPATE_SNAKE_BODY_LOOP
+cts_UPDATE_SNAKE_BODY_LOOP_END:
+    ; move first element to head
+    LDA cts_snake_head_x
+    STA cts_arr_snk_body_x             ; arr_x[0] = head_x
+    LDA cts_snake_head_y
+    STA cts_arr_snk_body_y             ; arr_y[0] = head_y
+cts_UPDATE_SNAKE_BODY_END:
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Movement
+cts_MOVE_UP:
+    LDA cts_snake_head_y
+    SUB #1
+    STA cts_snake_head_y
+    JMP cts_MOVE_SNAKE_END
+
+cts_MOVE_DOWN:
+    LDA cts_snake_head_y
+    ADD #1
+    STA cts_snake_head_y
+    JMP cts_MOVE_SNAKE_END
+
+cts_MOVE_LEFT:
+    LDA cts_snake_head_x
+    SUB #1
+    STA cts_snake_head_x
+    JMP cts_MOVE_SNAKE_END
+
+cts_MOVE_RIGHT:
+    LDA cts_snake_head_x
+    ADD #1
+    STA cts_snake_head_x
+    JMP cts_MOVE_SNAKE_END
+
+; game lost
+cts_GAME_LOST:
+    PLA                 ; drop the ret from stack
+    ;JSR cts_GAME_BLINK
+    JMP cts_MAIN_MENU
+
+; Collision
+cts_CHECK_HIT:
+
+    ; check bounds
+    LDA cts_snake_head_x
+    JSR cts_CHECK_X_BOUNDS
+    BEQ cts_GAME_LOST
+    LDA cts_snake_head_y
+    JSR cts_CHECK_Y_BOUNDS
+    BEQ cts_GAME_LOST
+
+    ; apple?
+    LDA cts_snake_head_pos
+    CMP cts_apple_pos
+    BNE cts_NO_APPLE_HIT
+    LDA cts_score               ; hit!
+    ADD #1
+    STA cts_score
+    JSR cts_RESPAWN_APPLE
+    ; Grow snake - restore the tail from backup in cts_snk_body_len + 1
+    LDX cts_snk_body_len
+    INC cts_snk_body_len
+    LDA cts_snk_body_tail_x
+    STA [cts_arr_snk_body_x, X]
+    LDA cts_snk_body_tail_y
+    STA [cts_arr_snk_body_y, X]
+
+cts_NO_APPLE_HIT:
+
+    RTS
+;;;;;;;;;;;;;;;;;;;;;
+
+
+cts_RESPAWN_APPLE:
+    ; respawn apple (simple pseudo random)
+    LDA cts_apple_pos
+    ADD #17
+    AND #$00FF
+    STA cts_apple_pos
+    RTS
+;;;;;;;;;;;;;;;;;;;;;
+
+; Draw Screen
+cts_DRAW_ALL:
+    JSR clear_screen
+
+    ; draw score Value
+    LDA #(36*17)
+    STA index
+    LDA cts_score
+    JSR PRBYTE
+
+    ; draw star
+    LDA cts_apple_pos
+    STA index
+    LDA #$38        ; 'O'
+    JSR ECHO
+
+    ; draw snake head
+    LDA cts_snake_head_pos
+    STA index
+    LDA #3         ; 'square'
+    JSR ECHO
+
+    ; draw snake body
+    LDY cts_snk_body_len
+cts_DRAW_SNKBODY_LOOP:                  ; i=len-1;i>=0;i--
+    DEY
+    BCS cts_DRAW_SNKBODY_END            ; if i == -1 ($FFFF)
+    LDA #36
+    LDX [cts_arr_snk_body_y, Y]         ; X = arr_y[i]
+    @multiply
+    ADD [cts_arr_snk_body_x, Y]         ; A = arr_y[i]*36 + arr_x[i]
+    STA index
+    LDA #3                              ; 'square'
+    JSR ECHO
+    JMP cts_DRAW_SNKBODY_LOOP
+cts_DRAW_SNKBODY_END:
+    NOP
+
+
+cts_GAME_END:
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+cts_GAME_BLINK:
+    LDX #3
+cts_GAME_BLINK_LOOP:
+    BEQ cts_GAME_BLINK_END
+    JSR clear_screen
+    @wait 1000
+    JSR cts_DRAW_ALL
+    @wait 1000
+    DEX
+    JMP cts_GAME_BLINK_LOOP
+cts_GAME_BLINK_END:
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+cts_CHECK_X_BOUNDS:
+    CMP #(sc_width)
+    BCS cts_CHECK_X_BOUNDS_FAILED
+    LDX #1
+    RTS
+cts_CHECK_X_BOUNDS_FAILED:
+    LDX #0
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;
+
+cts_CHECK_Y_BOUNDS:
+    CMP #(sc_height)
+    BCS cts_CHECK_Y_BOUNDS_FAILED
+    LDX #1
+    RTS
+cts_CHECK_Y_BOUNDS_FAILED:
+    LDX #0
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;
+
+
+; Strings
+cts_TITLE:
+    : "        === CATCH THE STAR ===%\"
+
+cts_HELP:
+    : "W A S D TO MOVE%1. PLAY%2. EXIT\"
+
+cts_ZERO:
+    : 0000

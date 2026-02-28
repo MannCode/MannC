@@ -1,0 +1,411 @@
+; ======================================
+; PONG - MINI GAME
+; for MANN-16Bit run with wozmon
+; ======================================
+
+.pong_player_pos
+.pong_star_pos
+
+;  --- Variables ---
+
+; tiles
+.pong_leftTile_pos
+.pong_rightTile_pos
+
+; ball
+.pong_ball_xpos
+.pong_ball_ypos
+.pong_ball_xdir
+.pong_ball_ydir
+.pong_ball_updatedelay = 10000
+.pong_ball_updatedelay_i
+
+; score
+.pong_leftscore
+.pong_rightscore
+
+; saves
+.pong_gamesWon
+.pong_gamesPlayed
+
+
+pong_MAIN_MENU:
+    JSR clear_screen
+    ; Print title
+    LDA #(pong_str_TITLE)
+    JSR ECHOSTR
+
+    LDA #(pong_str_HELP)
+    JSR ECHOSTR
+
+    LDA #(36*16)
+    STA index
+    LDA #(pong_str_T_GAMES_WON)
+    JSR ECHOSTR
+    LDA pong_gamesWon
+    JSR PRBYTE
+    LDA #$FE
+    JSR ECHO
+
+    LDA #(pong_str_TOTAL_GAMES_PLAYED)
+    JSR ECHOSTR
+    LDA pong_gamesPlayed
+    JSR PRBYTE
+
+
+pong_MAIN_MENU_LOOP:
+    LDA KBDCR
+    BEQ pong_MAIN_MENU_LOOP
+
+    DEC KBDCR
+    LDA KBD
+
+    CMP #$B      ; '1' 
+    BEQ pong_NEWGAME_START
+    CMP #$C      ; '2'
+    BEQ pong_GAME_EXIT
+    JMP pong_MAIN_MENU_LOOP
+
+pong_NEWGAME_START:
+
+    ;init score
+    LDA #0
+    STA pong_leftscore
+    STA pong_rightscore
+
+pong_GAME_START:
+    ; init positions
+
+    ;init ball
+    LDA #21
+    STA pong_ball_xpos
+    LDA #12
+    STA pong_ball_ypos
+    LDA #(pong_ball_updatedelay)
+    STA pong_ball_updatedelay_i
+
+    ;init tiles
+    LDA #$8
+    STA pong_leftTile_pos
+    LDA #$8
+    STA pong_rightTile_pos
+
+    JSR pong_DRAW_ALL
+
+    @wait #$FFFF
+    
+
+; Main Loop
+pong_MAIN_LOOP:
+    ; update ball
+    DEC pong_ball_updatedelay_i
+    BEQ pong_UPDATE_BALL
+
+    ; check keyboard press
+    LDA KBDCR
+    BEQ pong_MAIN_LOOP
+
+    DEC KBDCR
+    LDA KBD
+
+    CMP #64      ; 'W'
+    BEQ pong_MOVE_UP
+    CMP #60      ; 'S'
+    BEQ pong_MOVE_DOWN
+    CMP #57      ; 'P'
+    BEQ pong_MAIN_MENU
+    JMP pong_MAIN_LOOP
+
+
+; Movement
+pong_MOVE_UP:
+    LDA pong_leftTile_pos
+    JSR pong_CHECK_Y_EDGE
+    BEQ pong_UPDATE
+    SUB #2
+    STA pong_leftTile_pos
+    JMP pong_UPDATE
+
+pong_MOVE_DOWN:
+    LDA pong_leftTile_pos
+    ADD #3              ; +3 tile length
+    JSR pong_CHECK_Y_EDGE
+    BEQ pong_UPDATE
+    SUB #1
+    STA pong_leftTile_pos
+    JMP pong_UPDATE
+
+; Update Logic
+pong_UPDATE:
+    JSR pong_CHECK_HIT
+    JSR pong_DRAW_ALL
+    JMP pong_MAIN_LOOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+; Collision
+pong_CHECK_HIT:
+    ; check ball pos
+    LDA pong_ball_xpos
+    CMP #1
+    BEQ pong_CHECK_LEFT_COLLISION
+
+    CMP #34
+    BNE pong_NO_HIT
+
+    ; check right collision
+    LDA pong_ball_ypos
+    SUB pong_rightTile_pos
+    CMP #3
+    BCS pong_NO_HIT
+    JMP pong_BALL_REVX
+;;;;;;;;
+pong_CHECK_LEFT_COLLISION:
+    ; check left collision
+    LDA pong_ball_ypos
+    SUB pong_leftTile_pos
+    CMP #3
+    BCS pong_NO_HIT
+    JMP pong_BALL_REVX
+;;;;;;;;;
+pong_NO_HIT:
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;ball hit wall
+pong_WALL_HIT:
+    LDA pong_ball_xdir
+    CMP #0
+    BEQ pong_LEFT_WALL_HIT
+    ; right wall hit (left score update)
+    INC pong_leftscore
+    LDA pong_leftscore
+    CMP #10                     ; if score is 10 win/loose
+    BEQ pong_GAME_WIN
+    JMP pong_GAME_START
+pong_LEFT_WALL_HIT:
+    ; left wall hit (right score update)
+    INC pong_rightscore
+    LDA pong_rightscore
+    CMP #10
+    BEQ pong_GAME_LOOSE
+    JMP pong_GAME_START
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;Game loose/Win
+pong_GAME_WIN:
+    JSR clear_screen
+
+    LDA #(36*8+3)
+    STA index
+    LDA #(pong_str_GAME_WON)
+    JSR ECHOSTR
+
+    INC pong_gamesPlayed
+    INC pong_gamesWon
+
+    @wait #$FFFF
+    @wait #$FFFF
+    JMP pong_MAIN_MENU
+;;;;;;;;;;;
+
+pong_GAME_LOOSE:
+    JSR clear_screen
+
+    LDA #(36*8+1)
+    STA index
+    LDA #(pong_str_GAME_LOST)
+    JSR ECHOSTR
+
+    INC pong_gamesPlayed
+
+    @wait #$FFFF
+    @wait #$FFFF
+    JMP pong_MAIN_MENU
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+; Draw Screen
+pong_DRAW_ALL:
+    JSR clear_screen
+
+    ; draw score text
+    LDA #(18-4)
+    STA index
+    ; draw score value
+    LDA pong_leftscore
+    JSR PRBYTE
+    LDA index
+    ADD #5
+    STA index
+    LDA pong_rightscore
+    JSR PRBYTE
+
+    ; draw ball
+    LDA #36
+    LDX pong_ball_ypos
+    @multiply
+    ADD pong_ball_xpos                  ; A = bally * 36 + ballx
+    STA index
+    LDA #3                              ; square character
+    JSR ECHO
+
+    ; draw middle line
+    LDA #18
+    STA index 
+pong_DRAW_MIDDLE_LINE_LOOP:
+    LDA #26                             ; dotted line
+    JSR ECHO
+
+    LDA index
+    CMP #$270
+    BCS pong_DRAW_MIDDLE_LINE_END       ; if index > $252
+    ADD #35                             ; new line
+    STA index
+    JMP pong_DRAW_MIDDLE_LINE_LOOP
+pong_DRAW_MIDDLE_LINE_END:
+    
+    ;draw tiles
+    ;left
+    LDA #36
+    LDX pong_leftTile_pos
+    @multiply
+    JSR pong_DRAW_TILE
+    ;right
+    LDA #36
+    LDX pong_rightTile_pos
+    @multiply
+    ADD #35                             ; end of the line
+    JSR pong_DRAW_TILE
+
+pong_GAME_EXIT:
+    RTS
+;;;;;;;;;;;;;;;;;;
+
+
+pong_UPDATE_BALL:
+    ; update right tile
+    LDA pong_ball_ypos
+    SUB #1
+    JSR pong_CHECK_Y_EDGE
+    BEQ pong_RIGHT_TILE_SKIP
+    ADD #1
+    JSR pong_CHECK_Y_EDGE
+    BEQ pong_RIGHT_TILE_SKIP
+    SUB #2
+    STA pong_rightTile_pos
+pong_RIGHT_TILE_SKIP:
+
+    ; update x
+    LDA pong_ball_xdir
+    BEQ pong_BALL_MOVELEFT
+    LDA pong_ball_xpos
+    ADD #1
+    JMP pong_BALL_MOVEXEND
+pong_BALL_MOVELEFT:
+    LDA pong_ball_xpos
+    SUB #1
+pong_BALL_MOVEXEND:
+    STA pong_ball_xpos
+    JSR pong_CHECK_X_EDGE
+    BEQ pong_WALL_HIT
+
+    ; update y
+    LDA pong_ball_ydir
+    BEQ pong_BALL_MOVEUP
+    LDA pong_ball_ypos
+    ADD #1
+    JMP pong_BALL_MOVEYEND
+pong_BALL_MOVEUP:
+    LDA pong_ball_ypos
+    SUB #1
+pong_BALL_MOVEYEND:
+    STA pong_ball_ypos
+    JSR pong_CHECK_Y_EDGE
+    BEQ pong_BALL_REVY
+pong_BALL_REVYEND:
+    LDA #(pong_ball_updatedelay)
+    STA pong_ball_updatedelay_i
+    JMP pong_UPDATE
+;;;;;;;;
+
+pong_BALL_REVX:
+    LDX pong_ball_xdir
+    BNE pong_BALL_REVLEFT
+    INC pong_ball_xdir
+    RTS
+pong_BALL_REVLEFT:
+    DEC pong_ball_xdir
+    RTS
+;;;;;;;;
+
+pong_BALL_REVY:
+    LDX pong_ball_ydir
+    BNE pong_BALL_REVUP
+    INC pong_ball_ydir
+    JMP pong_BALL_REVYEND
+pong_BALL_REVUP:
+    DEC pong_ball_ydir
+    JMP pong_BALL_REVYEND
+;;;;;;;;;;;;;;;;;;;
+
+
+pong_DRAW_TILE:
+    STA index
+    LDX #4
+pong_DRAW_TILE_LOOP:
+    BEQ pong_DRAW_TILE_END
+    LDA #39             ; tile part (danda)
+    JSR ECHO
+    LDA index
+    ADD #35             ; new line
+    STA index
+    DEX
+    JSR pong_DRAW_TILE_LOOP
+pong_DRAW_TILE_END:
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;
+
+pong_CHECK_X_EDGE:
+    BEQ pong_CHECK_X_BOUNDS_FAILED
+    BCS pong_CHECK_X_BOUNDS_FAILED
+    CMP #(sc_width-1)
+    BCS pong_CHECK_X_BOUNDS_FAILED
+    LDX #1
+    RTS
+pong_CHECK_X_BOUNDS_FAILED:
+    LDX #0
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;
+
+pong_CHECK_Y_EDGE:
+    BEQ pong_CHECK_Y_BOUNDS_FAILED
+    BCS pong_CHECK_Y_BOUNDS_FAILED
+    CMP #(sc_height-1)
+    BCS pong_CHECK_Y_BOUNDS_FAILED
+    LDX #1
+    RTS
+pong_CHECK_Y_BOUNDS_FAILED:
+    LDX #0
+    RTS
+;;;;;;;;;;;;;;;;;;;;;;
+
+
+; Strings
+pong_str_TITLE:
+    : "          ====== PONG ======%%%\"
+
+pong_str_HELP:
+    : "W A TO MOVE UP AND DOWN%%1. PLAY%%2. EXIT%\"
+
+pong_str_GAME_WON:
+    : "== CONGRATULATIONS. YOU WON ==%\"
+
+pong_str_GAME_LOST:
+    : "OH. YOU LOST. BETTER LUCK NEXT TIME%\"
+
+pong_str_T_GAMES_WON:
+    : "GAMES WON: \"
+
+pong_str_TOTAL_GAMES_PLAYED:
+    : "GAMES PLAYED: \"

@@ -354,7 +354,6 @@ public class Assembler : MonoBehaviour
                     uShortPerLine.Add(str.Length - 2); // remove the quotes
                 }
                 else {
-                    Debug.Log(temp.Length-1);
                     //its a normal variable
                     uShortPerLine.Add(temp.Length - 1);
                 }
@@ -702,20 +701,23 @@ public class Assembler : MonoBehaviour
             ln += _byte;
 
             if((i+1) % 8 == 0 || i == code.Count - 1) {
-                if (ln.Trim() == lastShownLine && !starshown)
+                if (ln.Trim() == lastShownLine)
                 {
-                    ln = "*";
-                    starshown = true; // mark that this line is already shown
-                }
-                else if (ln.Trim() == lastShownLine && starshown)
-                {
-                    ln = "";
-                    line_start_address += 8;
-                    continue; // skip this line if it is same as last shown line
+                    if(starshown) {
+                        ln = "";
+                        line_start_address += 8;
+                        continue;
+                    }
+                    else
+                    {
+                        ln = "*";
+                        starshown = true; 
+                    }
                 }
                 else
                 {
                     lastShownLine = ln.Trim();
+                    starshown = false;
                     ln = line_start_address.ToString("X4") + ": " + ln.Trim();
                 }
                 stm.WriteLine(ln.Trim());

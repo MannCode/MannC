@@ -836,7 +836,7 @@ public class Emulator : MonoBehaviour
                     else F_C = false;
                     
                     A = (ushort)(A >> val);
-                    
+
                     if(A == 0)
                     {
                         F_Z = true;
@@ -959,6 +959,15 @@ public class Emulator : MonoBehaviour
     public int index;
 
     int resetIndex = 300;
+
+    public void ToogleHLT()
+    {
+        if (cpu.HLT)
+        {
+            cpu.HLT = false;
+        }
+        else cpu.HLT = true;
+    }
 
 
     public void Update()

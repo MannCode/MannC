@@ -44,16 +44,26 @@
 ======= Variables ========
 
 * variable is just a address to the memory location in which value is stored
-* if want to assign
-    * name + [space] + "=" + [space] + [address]
-    * example - xpos = $0510
-* if want to use the variable
-    * .[name of variable]
-    * example - STA .xpos
+* assign varialbes
+    * auto assigned variables
+        * .[name]
+        * example - .xpos
+        * assembler will assign variables address automatically
+    * variables with custom address/imm16
+        * [name] + [space] + "=" + [space] + [address/imm16]
+        * example - .multipled = 3000
+
+* if want to use the variable as address
+    * [instruction] [name of variable]
+    * example - STA xpos
+
+* if want to use the variable as imm16
+    * [instruction] #([name of varialble])
+    * example - LDA #(xpos)
 
 ===== Comment =====
 
-* we have only single line commnents yet
+* only support single line comment now
 * comment starts with ";" a semicolon
 * comment can start after a instruction also and in a seperate line also
 
