@@ -89,6 +89,8 @@ public class Assembler : MonoBehaviour
         {"BEQ", 0x008C},
         {"SLA", 0x00AC},
         {"SRA", 0x00B0},
+        {"UBS", 0xFFFA},
+        {"UPS", 0xFFFB},
         {"CLS", 0xFFFC},
         {"CNP", 0xFFFD},
         {"DUP", 0xFFFE},
@@ -414,35 +416,7 @@ public class Assembler : MonoBehaviour
                     string str = string.Join(" ", temp[1..]);
                     str = str[1..^1]; // remove the quotes
                     foreach(char ch in str) {
-                        if(ch >= '0' && ch <= '9') {
-                            code.Add((ushort)(0xA + (ch - '0')));
-                        }
-                        else if(ch >= 'A' && ch <= 'Z') {
-                            code.Add((ushort)(0x2A + (ch - 'A')));
-                        }
-                        else if(ch == '.') {
-                            code.Add(0x49);
-                        }
-                        else if(ch == ':') {
-                            code.Add(0x4A);
-                        }
-                        else if(ch == ' ') {
-                            code.Add(0x4E);
-                        }
-                        else if(ch == '=')
-                        {
-                            code.Add(0x21);
-                        }
-                        else if(ch == '\\') {
-                            code.Add(0x00); // end string character
-                        }
-                        else if(ch == '%')
-                        {
-                            code.Add(0xFE); // new line character
-                        }
-                        else {
-                            error("Invalid character in string: " + ch);
-                        }
+                        code.Add(calculateChar(ch));
                     }
                 }
                 else {
@@ -620,6 +594,10 @@ public class Assembler : MonoBehaviour
                 }
                 operatorStack.Add(_token);
             }
+            else if(_token[0].ToString() == "\'") {
+                //its a character
+                valueStack.Add(getDecimalVal(_token).ToString());
+            }
             else {
                 //it is a variable or a lable
                 string nearestValue = "";
@@ -661,6 +639,39 @@ public class Assembler : MonoBehaviour
         }
         else {
             return new Tuple<ushort, bool>(getDecimalVal(value), isConstantVariable);
+        }
+    }
+
+    ushort calculateChar(char ch) {
+        if(ch >= '0' && ch <= '9') {
+            return (ushort)(0xA + (ch - '0'));
+        }
+        else if(ch >= 'A' && ch <= 'Z') {
+            return (ushort)(0x2A + (ch - 'A'));
+        }
+        else if(ch == '.') {
+            return 0x49;
+        }
+        else if(ch == ':') {
+            return 0x4A;
+        }
+        else if(ch == ' ') {
+            return 0x4E;
+        }
+        else if(ch == '=')
+        {
+            return 0x21;
+        }
+        else if(ch == '\\') {
+            return 0x00; // end string character
+        }
+        else if(ch == '%')
+        {
+            return 0xFE; // new line character
+        }
+        else {
+            error("Invalid character: " + ch);
+            return 0;
         }
     }
 
@@ -736,14 +747,14 @@ public class Assembler : MonoBehaviour
 
         stm.WriteLine("Variables:");
         foreach(Variable var in variables) {
-            if (Convert.ToInt16(var.value) < 0x5A00)
-            {
-                stm.WriteLine("      " + var.name + " = #" + var.value);
-            }
-            else
-            {
-                stm.WriteLine("      " + var.name + " = 0x" + Convert.ToUInt16(var.value, 10).ToString("X4"));
-            }
+            // if (Convert.ToInt16(var.value) < 0x5A00)
+            // {
+            //     stm.WriteLine("      " + var.name + " = #" + var.value);
+            // }
+            // else
+            // {
+            stm.WriteLine("      " + var.name + " = 0x" + Convert.ToUInt16(var.value, 10).ToString("X4"));
+            // }
         }
 
         stm.WriteLine("\nLables:");
@@ -833,6 +844,13 @@ public class Assembler : MonoBehaviour
         }
         else if(operand[0].ToString() == "^") {
             return Convert.ToUInt16(operand[1..], 2);
+        }
+        else if(operand[0].ToString() == "\'") {
+            if(operand.Length != 3 || operand[2] != '\'') {
+                error("Invalid character: " + operand);
+                return 0;
+            }
+            return calculateChar(operand[1]);
         }
         else {
             return Convert.ToUInt16(operand);

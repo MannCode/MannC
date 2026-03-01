@@ -4,6 +4,7 @@
 
 ; Variables initialization
 .XAMCH
+.XAMCH_BK
 .STCH
 .CH
 .YSAV
@@ -18,7 +19,7 @@
 
 ; main program
 RESET:
-    JSR clear_screen
+    JSR bit_clear_screen
     LDY #$FFFF
 NOTCR:
     CMP #$FF
@@ -38,6 +39,7 @@ BACKSPACE:
     DEY
     BCS GETLINE
 NEXTCHAR:
+    DUP
     LDA KBDCR
     BEQ NEXTCHAR    ; wait for key press
     DEC KBDCR       ; reseting KBDCR to 0
@@ -55,6 +57,7 @@ SETMODE:
 BLSKIP:
     INY             ; INC text index
 NEXTITEM:
+    DUP
     LDA [IN, Y]     ; Get character
     CMP #$FE        ; CR?
     BEQ GETLINE     ; Yes, done this line.
@@ -115,10 +118,17 @@ NOTSTOR:
     LDA CH
     STA STCH
     STA XAMCH       ; CH = STCH = XAMCH
+    STA XAMCH_BK
 
     LDX #0
 NXTPRNT:
+    DUP
     BNE PRDATA      ; NE means no address to print
+
+    ; print bin data to right
+    INC bit_index
+    JSR PRBIN
+
     LDA #$FE        ; CR.
     JSR ECHO        ; Output it
     LDA XAMCH       ; 'Examine index'
@@ -140,6 +150,42 @@ XAMNEXT:
     LDA XAMCH
     AND #3
     JMP NXTPRNT
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRBIN:
+    LDA XAMCH_BK
+    CMP XAMCH           ; if XAMCH_BK == XAMCH
+    BEQ PR_BIN_END
+
+    ; INC index       ; space
+    LDA [XAMCH_BK], 0
+    SRA #8              ; right byte
+    BEQ PR_BIN_DOT_RIGHT
+    CMP #74
+    BCS PR_BIN_DOT_RIGHT
+PR_BIN_DOT_RIGHT_END:
+    JSR ECHO
+
+    LDA [XAMCH_BK], 0
+    AND #$FF             ; left byte
+    BEQ PR_BIN_DOT_LEFT
+    CMP #74
+    BCS PR_BIN_DOT_LEFT
+PR_BIN_DOT_LEFT_END:
+    JSR ECHO
+
+    INC XAMCH_BK
+    JMP PRBIN
+
+PR_BIN_END:
+    RTS
+
+PR_BIN_DOT_RIGHT:
+    LDA #73             ; "."
+    JMP PR_BIN_DOT_RIGHT_END
+PR_BIN_DOT_LEFT:
+    LDA #73
+    JMP PR_BIN_DOT_LEFT_END
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRSHORT:
@@ -177,7 +223,7 @@ ECHOSTR:
     RTS
 
 WELCOME_STR:
-    : "===== WELCOME TO WOZMON ========%%=== PROGRAMS INSTALLED ===%1. PONGO: 3900%2. SNAKYY: 4C00%\"
+    : "===== WELCOME TO WOZMON ========%%=== PROGRAMS INSTALLED ===%1. BYTEHELL DOOM: 3000%2. PONGO: 3900%3. SNAKYY: 4C00%\"
 
 intrupt:
     LDA #1

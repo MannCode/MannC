@@ -1,5 +1,5 @@
 ; ======================================
-; PONG - MINI GAME
+;       PONGO
 ; for MANN-16Bit run with wozmon
 ; ======================================
 
@@ -30,7 +30,7 @@
 
 
 pong_MAIN_MENU:
-    JSR clear_screen
+    JSR bit_clear_screen
     ; Print title
     LDA #(pong_str_TITLE)
     JSR ECHOSTR
@@ -39,7 +39,7 @@ pong_MAIN_MENU:
     JSR ECHOSTR
 
     LDA #(36*16)
-    STA index
+    STA bit_index
     LDA #(pong_str_T_GAMES_WON)
     JSR ECHOSTR
     LDA pong_gamesWon
@@ -51,6 +51,8 @@ pong_MAIN_MENU:
     JSR ECHOSTR
     LDA pong_gamesPlayed
     JSR PRBYTE
+
+    DUP
 
 
 pong_MAIN_MENU_LOOP:
@@ -194,10 +196,10 @@ pong_LEFT_WALL_HIT:
 
 ;Game loose/Win
 pong_GAME_WIN:
-    JSR clear_screen
+    JSR bit_clear_screen
 
     LDA #(36*8+3)
-    STA index
+    STA bit_index
     LDA #(pong_str_GAME_WON)
     JSR ECHOSTR
 
@@ -210,10 +212,10 @@ pong_GAME_WIN:
 ;;;;;;;;;;;
 
 pong_GAME_LOOSE:
-    JSR clear_screen
+    JSR bit_clear_screen
 
     LDA #(36*8+1)
-    STA index
+    STA bit_index
     LDA #(pong_str_GAME_LOST)
     JSR ECHOSTR
 
@@ -227,17 +229,17 @@ pong_GAME_LOOSE:
 
 ; Draw Screen
 pong_DRAW_ALL:
-    JSR clear_screen
+    JSR bit_clear_screen
 
     ; draw score text
     LDA #(18-4)
-    STA index
+    STA bit_index
     ; draw score value
     LDA pong_leftscore
     JSR PRBYTE
-    LDA index
+    LDA bit_index
     ADD #5
-    STA index
+    STA bit_index
     LDA pong_rightscore
     JSR PRBYTE
 
@@ -246,22 +248,22 @@ pong_DRAW_ALL:
     LDX pong_ball_ypos
     @multiply
     ADD pong_ball_xpos                  ; A = bally * 36 + ballx
-    STA index
+    STA bit_index
     LDA #3                              ; square character
     JSR ECHO
 
     ; draw middle line
     LDA #18
-    STA index 
+    STA bit_index 
 pong_DRAW_MIDDLE_LINE_LOOP:
     LDA #26                             ; dotted line
     JSR ECHO
 
-    LDA index
+    LDA bit_index
     CMP #$270
-    BCS pong_DRAW_MIDDLE_LINE_END       ; if index > $252
+    BCS pong_DRAW_MIDDLE_LINE_END       ; if bit_index > $252
     ADD #35                             ; new line
-    STA index
+    STA bit_index
     JMP pong_DRAW_MIDDLE_LINE_LOOP
 pong_DRAW_MIDDLE_LINE_END:
     
@@ -277,6 +279,8 @@ pong_DRAW_MIDDLE_LINE_END:
     @multiply
     ADD #35                             ; end of the line
     JSR pong_DRAW_TILE
+
+    DUP
 
 pong_GAME_EXIT:
     RTS
@@ -351,15 +355,15 @@ pong_BALL_REVUP:
 
 
 pong_DRAW_TILE:
-    STA index
+    STA bit_index
     LDX #4
 pong_DRAW_TILE_LOOP:
     BEQ pong_DRAW_TILE_END
     LDA #39             ; tile part (danda)
     JSR ECHO
-    LDA index
+    LDA bit_index
     ADD #35             ; new line
-    STA index
+    STA bit_index
     DEX
     JSR pong_DRAW_TILE_LOOP
 pong_DRAW_TILE_END:
@@ -369,7 +373,7 @@ pong_DRAW_TILE_END:
 pong_CHECK_X_EDGE:
     BEQ pong_CHECK_X_BOUNDS_FAILED
     BCS pong_CHECK_X_BOUNDS_FAILED
-    CMP #(sc_width-1)
+    CMP #(bit_sc_width-1)
     BCS pong_CHECK_X_BOUNDS_FAILED
     LDX #1
     RTS
@@ -381,7 +385,7 @@ pong_CHECK_X_BOUNDS_FAILED:
 pong_CHECK_Y_EDGE:
     BEQ pong_CHECK_Y_BOUNDS_FAILED
     BCS pong_CHECK_Y_BOUNDS_FAILED
-    CMP #(sc_height-1)
+    CMP #(bit_sc_height-1)
     BCS pong_CHECK_Y_BOUNDS_FAILED
     LDX #1
     RTS

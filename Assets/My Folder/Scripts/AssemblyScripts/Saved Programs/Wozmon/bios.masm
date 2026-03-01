@@ -2,29 +2,43 @@
 ;   CUSTOM BIOS FOR MANN 16-BIT
 ; ======================================
 
-.line
-.col
-.index
-.indexStart = $7000
-.actual_index
-.sc_width = 36
-.sc_height = 18
-.pix_length = 648
-.val
-.str_char
-.str_msg
+
+; Screen Variables
+; Bitmap screen
+.bit_index                  ; 0 -> 36*18
+.bit_indexStart = $B577
+.bit_index_sc
+.bit_sc_width = 36
+.bit_sc_height = 18
+
+; Graphics screen
+.pix_index                  ; 0 -> 255*144=$9000
+.pix_indexStart = $B800
+.pix_index_sc               ; $B800 -> $FFFF ($4800*2 positions)
+.pix_sc_width = 256
+.pix_sc_height = 144
+
+; random number
+.rand_seed
+.rand_temp
 
 ; keyboard
 .KBD                ; Keyboard input
 .KBDCR              ; keyboard control register
 
-; multiply
-.mul_temp
-.mul_counter
-.mul_result
-
 start:
+    UBS             ; Use bitmap screen mode
+    LDA #$b2        ; random number seed
+    STA rand_seed
     JMP $5280
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; for bitmap
+
+; string variales 
+.str_char
+.str_msg
 
 ~print_str 1 {  ; Print string on screen
     LDA ^1
@@ -40,18 +54,19 @@ print_str_done:
     LDX #0
 }
 
+
 ~print_char 1 {  ; Print char on the current position and increment cursor
     @set_char ^1
-    INC index
+    INC bit_index
 }
 
 ~set_char 1 {  ; Set char on the current position of cursor
-    LDA index
-    ADD #(indexStart)
-    STA actual_index
-    CMP #$7288
-    BCS cls_bios
-sc_cls_end:
+    LDA bit_index
+    ADD #(bit_indexStart)
+    STA bit_index_sc
+    CMP #$B7FF
+    BCS bit_cls_bios
+sc_cls_bios_end:
     LDA ^1
     CMP #$FE                    ; CR?
     BEQ return_bios
@@ -59,53 +74,111 @@ sc_cls_end:
     BEQ backspace_bios
     CMP #$FD                    ; ESC?
     BEQ set_char_end
-    STA [actual_index], 0
+    STA [bit_index_sc], 0
 set_char_end:
-    DUP
 }
 
-clear_screen:
+bit_clear_screen:
     CLS
     LDA #00
-    STA index
-    LDA #(indexStart)
-    STA actual_index
-    DUP
+    STA bit_index
+    LDA #(bit_indexStart)
+    STA bit_index_sc
     RTS
 
-cls_bios:
-    JSR clear_screen
-    JMP sc_cls_end
+bit_cls_bios:
+    JSR bit_clear_screen
+    JMP sc_cls_bios_end
 
-new_line:
+bit_new_line:
 .mod_val
     PHA
-    @mod index #(sc_width)
+    @mod bit_index #(bit_sc_width)
     STA mod_val
-    LDA #(sc_width)
+    LDA #(bit_sc_width)
     SUB mod_val
-    ADD index
-    STA index
-    CMP #(pix_length)
+    ADD bit_index
+    STA bit_index
+    CMP #(bit_sc_width*bit_sc_height)
     BNE check_pix_end
     LDA #0
-    STA index
+    STA bit_index
     CNP
 check_pix_end:
     PLA
     RTS
 
 return_bios:
-    JSR new_line
-    DEC index
+    JSR bit_new_line
+    DEC bit_index
     JMP set_char_end
 
 backspace_bios:
-    DEC index
+    DEC bit_index
     @set_char #0
-    DEC index
+    DEC bit_index
     JMP set_char_end
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; for graphics screen
+
+~print_pix 1 {      ; set pix on current pos and advance to next pix
+    @set_pix ^1
+    INC pix_index
+}
+
+.pix_value_temp
+
+~set_pix 1 {        ; set pix on current pos
+    LDA pix_index
+    SRA #1          ; divide by 2
+    ADD #(pix_indexStart)
+    STA pix_index_sc
+    BCS PIX_RESET_BIOS
+PIX_RESET_BIOS_END:
+    LDA pix_index
+    AND #1                      ; get 1st bit
+    BEQ SET_PIX_RIGHT_SIDE      ; divided by 2 -> right side of pix group
+    LDA [pix_index_sc], 0       ; get group of pix at index
+    AND #$FF00                  ; keep left byte
+    ORA ^1                      ; add new right byte
+    STA [pix_index_sc], 0       ; store
+    JMP SET_PIX_END
+SET_PIX_RIGHT_SIDE:
+    LDA [pix_index_sc], 0
+    AND #$00FF                  ; keep left byte
+    STA pix_value_temp          ; store in temp variable
+    LDA ^1
+    SLA #8                      ; shift new value to left side
+    ADD pix_value_temp          ; add old value to right side
+    STA [pix_index_sc], 0       ; store
+SET_PIX_END:
+}
+
+PIX_CLEAR_SCREEN:
+    DUP
+    CLS
+PIX_RESET:
+    LDA #00
+    STA pix_index
+    LDA #(pix_indexStart)
+    STA pix_index_sc
+    RTS
+
+PIX_RESET_BIOS:
+    JSR PIX_CLEAR_SCREEN
+    JMP PIX_RESET_BIOS_END
+    
+
+
+
+
+
+
+; multiply
+.mul_temp
+.mul_counter
+.mul_result
 
 ~multiply 0 {   ; multiply two numbers (A * X)
     STA mul_temp
@@ -137,6 +210,17 @@ mod_loop:
     SUB ^2
     JMP mod_loop
 break_mod:
+}
+
+
+~rand16 0 {
+    LDA rand_temp
+    LDX #173
+    @multiply         ; multiply
+    ADD #13849          ; increment
+
+    STA rand_seed   ; save new seed
+    RTS
 }
 
 ~wait 1 {

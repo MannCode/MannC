@@ -148,16 +148,16 @@
     %01 : $A9 : "[Indirect], X"
 
 == Bitwise Shift ==
-%101011XX: SLA :
+%101011SSMXX: SLA :
     %00 : $AC : "Imidiate"
 %101100XX: SRA :
     %00 : $B0 : "Imitidate"
 
-== CLEAR Screen ==
+== Screen ==
+$FFFA: UBS -> "Use Bitmap screen mode"
+$FFFB: UPS -> "Use Pixel screen mode"
 $FFFC: CLS -> "CLEAR screen and deletes old pages"
 $FFFD: CNP -> "Clear Screen to new page and store the old page"
-
-== Display ==
 $FFFE: DUP -> "Update Diplay"
 
 == HLT ==

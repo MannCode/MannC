@@ -25,7 +25,7 @@ public class ScreenRenderer : MonoBehaviour
 
     // [HideInInspector]
     public bool updateScreen = false;
-    bool useBitMap = true;
+    public bool isBitMapMode = true;
 
     //bitmap configuration
     public int bitmapWidth = 7;
@@ -38,6 +38,7 @@ public class ScreenRenderer : MonoBehaviour
     public int currentScreenIndex = 0;
     public int totalScreens = 1;
     public bool isHomeScreen = true;
+    int maxBitmapCharacters = 74; // 0-255
 
     // all 0
     // public int[][] bitmap1 = new int[8][] {
@@ -99,10 +100,11 @@ public class ScreenRenderer : MonoBehaviour
     public void Update()
     {
         if(updateScreen) {
-            if(useBitMap) {
+            if(isBitMapMode) {
                 UpdateEachPixelBitMap();
             } else {
                 UpdateEachPixel();
+                UpdateEachPixelBitMap();
             }
         }
 
@@ -119,11 +121,15 @@ public class ScreenRenderer : MonoBehaviour
     public void UpdateEachPixel()
     {
         mem = emu.mem_Backup;
-        int index = 0x7000;
+        int index = 0xB800;
         for(int y=texture.height-1; y >= 0; y--) {
-            for(int x=0; x < texture.width; x++) {
+            for(int x=0; x < texture.width; x+=2) {
                 ushort data_short = mem.Data[index];
-                texture.SetPixel(x, y, (data_short == 0x0001) ? new Color(0.0003f, 1.0f, 0.121f, 1.0f) : Color.black);
+                // left 8 bits 1st pixel, right 8 bits 2nd pixel
+                float data_1 = ((data_short & 0xFF00) >> 8) / 255.0f;
+                float data_2 = (data_short & 0x00FF) / 255.0f;
+                texture.SetPixel(x, y, new Color(0.0003f*data_1, data_1, 0.121f*data_1, 1.0f));
+                texture.SetPixel(x+1, y, new Color(0.0003f*data_2, data_2, 0.121f*data_2, 1.0f));
                 index++;
             }
         }
@@ -137,10 +143,16 @@ public class ScreenRenderer : MonoBehaviour
 
         int bitmapCountX = texture.width/bitmapWidth;
         int bitmapCountY = texture.height/bitmapHeight;
-        int index = 0x7000;
+        int index = 0xB577;
         for(int b_y=bitmapCountY-1; b_y >= 0; b_y--) {
             for(int b_x=0; b_x < bitmapCountX; b_x++) {
                 int bitmapIndex = mem.Data[index];
+
+                if((bitmapIndex > maxBitmapCharacters || bitmapIndex == 0) && !isBitMapMode)
+                {
+                    continue;
+                }
+
                 for(int y=0; y < bitmapHeight; y++) {
                     for(int x=0; x < bitmapWidth; x++) {
                         try {
@@ -157,6 +169,14 @@ public class ScreenRenderer : MonoBehaviour
         }
         updateScreen = false;
         texture.Apply();
+    }
+
+    public void usePixelScreenMode() {
+        isBitMapMode = false;
+    }
+
+    public void useBitmapScreenMode() {
+        isBitMapMode = true;
     }
 
     public void storeCurrentScreenBackup() {

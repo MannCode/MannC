@@ -35,18 +35,16 @@ example : JMP 03 -> 0110 0011 -> 01100011
 
 ===== Memory Layout (Pixel Wise VRAM) =====
 Total - 0xFFFF * 0x2 = 128 KB
-0x0000 - 0x6DFF -> General RAM (55 KB)
-0x6E00 - 0x6EFF -> Stack (512 Bytes)
-0x6F00 - 0x6FFF -> I/O (512 Bytes)
-0x7000 - 0xFFFF -> VRAM (72 KB)
+0x0000 - 0xB3FF -> General RAM (90 KB)
+0xB400 - 0xB4FF -> Stack (512 Bytes)
+0xB500 - 0xB576 -> I/Of (238 Bytes)
+0xB577 - 0xB7FF -> Bitmap VRAM (1298 Bytes)
+0xB800 - 0xFFFF -> Graphics VRAM (36 KB)
 
 
 Variable Storage -> 0x5A00 - 0x6DDF (5087)
 Macro Variable Storage -> 0x6DE0 - 0x6DEF (15)
 Intrupt Start -> 0x6DF0 - 0x6DFF (15)
-
-for Bitmap
-0x7000 - 0x7288
 
 ===== Screen Size =====
 pixel - 256x144

@@ -1,5 +1,5 @@
 ; ======================================
-; CTS - CATCH THE STAR - MINI GAME
+;           SNAKYY
 ; for MANN-16Bit + BIOS + WOZMON
 ; ======================================
 
@@ -17,11 +17,11 @@
 .cts_snake_direction_next
 
 ; snake body
-.cts_arr_snk_body_x = $4500         ; arr storage for snake body x
-.cts_arr_snk_body_y = $4800         ; arr stoage for snake body y
+.cts_arr_snk_body_pos = $4500         ; arr storage for snake body x
+;.cts_arr_snk_body_y = $4800         ; arr stoage for snake body y
 .cts_snk_body_len                   ; len for both arr
-.cts_snk_body_tail_x               
-.cts_snk_body_tail_y                ; backup for last element (tail) of snake
+.cts_snk_body_tail_pos               
+; .cts_snk_body_tail_y                ; backup for last element (tail) of snake
 
 
 ; update delay
@@ -33,13 +33,15 @@
 
 
 cts_MAIN_MENU:
-    JSR clear_screen
+    JSR bit_clear_screen
     ; Print title
     LDA #(cts_TITLE)
     JSR ECHOSTR
 
     LDA #(cts_HELP)
     JSR ECHOSTR
+
+    DUP
 
 cts_MAIN_MENU_LOOP:
     LDA KBDCR
@@ -70,14 +72,11 @@ cts_GAME_START:
     ; hardcode snk body values
     LDA #2
     STA cts_snk_body_len
-    LDX cts_snake_head_x
+    LDX cts_snake_head_pos
     DEX
-    STX cts_arr_snk_body_x
+    STX cts_arr_snk_body_pos
     DEX
-    STX (cts_arr_snk_body_x+1)
-    LDA cts_snake_head_y
-    STA cts_arr_snk_body_y
-    STA (cts_arr_snk_body_y+1)
+    STX (cts_arr_snk_body_pos+1)
 
     LDA #100
     STA cts_apple_pos
@@ -89,6 +88,7 @@ cts_GAME_START:
     LDA #(cts_snake_update_delay)
     STA cts_snake_update_delay_i
 
+    LDY #0                      ; draw snake
     JSR cts_DRAW_ALL
 
 ; Main Loop
@@ -164,10 +164,8 @@ cts_UPDATE_SNAKE:
     LDX cts_snk_body_len
     BEQ cts_SNK_TAIL_BAKUP_END      ; no tail
     DEX
-    LDA [cts_arr_snk_body_x, X]
-    STA cts_snk_body_tail_x
-    LDA [cts_arr_snk_body_y, X]
-    STA cts_snk_body_tail_y
+    LDA [cts_arr_snk_body_pos, X]
+    STA cts_snk_body_tail_pos
 cts_SNK_TAIL_BAKUP_END:
     ; move snake body
     JSR cts_UPDATE_SNAKE_BODY
@@ -194,6 +192,7 @@ cts_MOVE_SNAKE_END:
     ADD cts_snake_head_x        ; pos = 36*y+x
     STA cts_snake_head_pos
 
+    LDY #0                      ; draw snake
     JSR cts_DRAW_ALL
     JMP cts_MAIN_LOOP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -207,21 +206,17 @@ cts_UPDATE_SNAKE_BODY:
     BEQ cts_UPDATE_SNAKE_BODY_LOOP_END       ; len = 1, no loop, move body to head
 cts_UDPATE_SNAKE_BODY_LOOP:
     DEX                             ; i-1
-    LDA [cts_arr_snk_body_x, X]     ; reg A = arr_x[i-1]
-    LDY [cts_arr_snk_body_y, X]     ; reg Y = arr_y[i-1]
+    LDA [cts_arr_snk_body_pos, X]     ; reg A = body[i-1]
     INX
-    STA [cts_arr_snk_body_x, X]     ; arr_x[i] = reg A
-    STY [cts_arr_snk_body_y, X]     ; arr_y[i] = reg Y
+    STA [cts_arr_snk_body_pos, X]     ; body[i] = reg A
 
     DEX
     BEQ cts_UPDATE_SNAKE_BODY_LOOP_END                ; if x = 0; looped len-1 -> 1
     JMP cts_UDPATE_SNAKE_BODY_LOOP
 cts_UPDATE_SNAKE_BODY_LOOP_END:
     ; move first element to head
-    LDA cts_snake_head_x
-    STA cts_arr_snk_body_x             ; arr_x[0] = head_x
-    LDA cts_snake_head_y
-    STA cts_arr_snk_body_y             ; arr_y[0] = head_y
+    LDA cts_snake_head_pos
+    STA cts_arr_snk_body_pos             ; body[0] = head_pos
 cts_UPDATE_SNAKE_BODY_END:
     RTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -254,7 +249,7 @@ cts_MOVE_RIGHT:
 ; game lost
 cts_GAME_LOST:
     PLA                 ; drop the ret from stack
-    ;JSR cts_GAME_BLINK
+    JSR cts_GAME_BLINK
     JMP cts_MAIN_MENU
 
 ; Collision
@@ -279,12 +274,25 @@ cts_CHECK_HIT:
     ; Grow snake - restore the tail from backup in cts_snk_body_len + 1
     LDX cts_snk_body_len
     INC cts_snk_body_len
-    LDA cts_snk_body_tail_x
-    STA [cts_arr_snk_body_x, X]
-    LDA cts_snk_body_tail_y
-    STA [cts_arr_snk_body_y, X]
-
+    LDA cts_snk_body_tail_pos
+    STA [cts_arr_snk_body_pos, X]
 cts_NO_APPLE_HIT:
+
+    ; check if hit itself
+    LDX cts_snk_body_len
+    CPX #3
+    BCC cts_CHECK_SNAKE_SELF_HIT_END
+cts_CHECK_SNAKE_SELF_HIT_LOOP:      ; i=len-1; i>2; i--
+    DEX
+    CPX #2
+    BEQ cts_CHECK_SNAKE_SELF_HIT_END
+
+    LDA [cts_arr_snk_body_pos, X]
+    CMP cts_snake_head_pos
+    BEQ cts_GAME_LOST                   ; else if head_pos == body[i] -> JMP Gamelost;
+
+    JMP cts_CHECK_SNAKE_SELF_HIT_LOOP   ; else JMP loop
+cts_CHECK_SNAKE_SELF_HIT_END:
 
     RTS
 ;;;;;;;;;;;;;;;;;;;;;
@@ -301,42 +309,43 @@ cts_RESPAWN_APPLE:
 
 ; Draw Screen
 cts_DRAW_ALL:
-    JSR clear_screen
+    JSR bit_clear_screen
 
     ; draw score Value
     LDA #(36*17)
-    STA index
+    STA bit_index
     LDA cts_score
     JSR PRBYTE
 
     ; draw star
     LDA cts_apple_pos
-    STA index
+    STA bit_index
     LDA #$38        ; 'O'
     JSR ECHO
 
+    ; (Y == 1) ? don't draw snake : draw snake
+
+    CPY #1
+    BEQ cts_DRAW_SNKBODY_END
+    
     ; draw snake head
     LDA cts_snake_head_pos
-    STA index
+    STA bit_index
     LDA #3         ; 'square'
     JSR ECHO
 
     ; draw snake body
-    LDY cts_snk_body_len
+    LDX cts_snk_body_len
 cts_DRAW_SNKBODY_LOOP:                  ; i=len-1;i>=0;i--
-    DEY
+    DEX
     BCS cts_DRAW_SNKBODY_END            ; if i == -1 ($FFFF)
-    LDA #36
-    LDX [cts_arr_snk_body_y, Y]         ; X = arr_y[i]
-    @multiply
-    ADD [cts_arr_snk_body_x, Y]         ; A = arr_y[i]*36 + arr_x[i]
-    STA index
+    LDA [cts_arr_snk_body_pos, X]         ; Y = body[i]
+    STA bit_index
     LDA #3                              ; 'square'
     JSR ECHO
     JMP cts_DRAW_SNKBODY_LOOP
 cts_DRAW_SNKBODY_END:
-    NOP
-
+    DUP
 
 cts_GAME_END:
     RTS
@@ -347,10 +356,16 @@ cts_GAME_BLINK:
     LDX #3
 cts_GAME_BLINK_LOOP:
     BEQ cts_GAME_BLINK_END
-    JSR clear_screen
-    @wait 1000
+    TXA
+    PHA
+    LDY #1              ; dont draw snake
     JSR cts_DRAW_ALL
-    @wait 1000
+    @wait #$5FFF
+    LDY #0              ; draw snake
+    JSR cts_DRAW_ALL
+    @wait #$5FFF
+    PLA
+    TAX
     DEX
     JMP cts_GAME_BLINK_LOOP
 cts_GAME_BLINK_END:
@@ -358,7 +373,7 @@ cts_GAME_BLINK_END:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 cts_CHECK_X_BOUNDS:
-    CMP #(sc_width)
+    CMP #(bit_sc_width)
     BCS cts_CHECK_X_BOUNDS_FAILED
     LDX #1
     RTS
@@ -368,7 +383,7 @@ cts_CHECK_X_BOUNDS_FAILED:
 ;;;;;;;;;;;;;;;;;;;;;;
 
 cts_CHECK_Y_BOUNDS:
-    CMP #(sc_height)
+    CMP #(bit_sc_height)
     BCS cts_CHECK_Y_BOUNDS_FAILED
     LDX #1
     RTS

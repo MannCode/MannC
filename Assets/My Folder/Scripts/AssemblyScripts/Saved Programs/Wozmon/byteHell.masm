@@ -1,0 +1,19 @@
+; ===================================
+;        byteHell - DOOM
+; ===================================
+
+
+.bhd_pix_value
+
+bhd_MAIN_MENU:
+    UPS
+
+    LDA #$FF
+    STA bhd_pix_value
+
+bhd_LOOP:
+    @print_pix bhd_pix_value
+    JMP bhd_LOOP
+
+bhd_END:
+    HLT

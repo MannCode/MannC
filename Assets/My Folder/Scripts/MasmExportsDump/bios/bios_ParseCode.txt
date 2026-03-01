@@ -1,139 +1,196 @@
-.line   5A00
-.col   5A01
-.index   5A02
-.indexStart = $7000
-.actual_index   5A03
-.sc_width = 36
-.sc_height = 18
-.pix_length = 648
-.val   5A04
-.str_char   5A05
-.str_msg   5A06
-.KBD   5A07
-.KBDCR   5A08
-.mul_temp   5A09
-.mul_counter   5A0A
-.mul_result   5A0B
-    0000  JMP $5280
-    0002  LDA $6DE0
-    0004  STA str_msg
-    0006  LDA [str_msg], X
-    0008  BEQ print_str_done
-    000A  STA str_char
-    000C  LDA str_char
-    000E  STA $6DE0
-    0010  JSR print_char
-    0012  INX
-    0013  JMP print_str_loop
-    0015  LDX #0
-    0017  RTS
-    0018  LDA $6DE0
-    001A  STA $6DE0
-    001C  JSR set_char
-    001E  INC index
-    0020  RTS
-    0021  LDA index
-    0023  ADD #(indexStart)
-    0025  STA actual_index
-    0027  CMP #$7288
-    0029  BCS cls_bios
-    002B  LDA $6DE0
-    002D  CMP #$FE
-    002F  BEQ return_bios
-    0031  CMP #$FF
-    0033  BEQ backspace_bios
-    0035  CMP #$FD
-    0037  BEQ set_char_end
-    0039  STA [actual_index], 0
-    003B  DUP
-    003C  RTS
-    003D  CLS
-    003E  LDA #00
-    0040  STA index
-    0042  LDA #(indexStart)
-    0044  STA actual_index
-    0046  DUP
-    0047  RTS
-    0048  JSR clear_screen
-    004A  JMP sc_cls_end
-.mod_val   5A0C
-    004C  PHA
-    004D  LDA index
-    004F  STA $6DE0
-    0051  LDA #(sc_width)
-    0053  STA $6DE1
-    0055  JSR mod
-    0057  STA mod_val
-    0059  LDA #(sc_width)
-    005B  SUB mod_val
-    005D  ADD index
-    005F  STA index
-    0061  CMP #(pix_length)
-    0063  BNE check_pix_end
-    0065  LDA #0
-    0067  STA index
-    0069  CNP
-    006A  PLA
-    006B  RTS
-    006C  JSR new_line
-    006E  DEC index
-    0070  JMP set_char_end
-    0072  DEC index
-    0074  LDA #0
-    0076  STA $6DE0
-    0078  JSR set_char
-    007A  DEC index
-    007C  JMP set_char_end
-    007E  STA mul_temp
-    0080  STX mul_counter
-    0082  LDA #0
-    0084  STA mul_result
-    0086  LDA mul_counter
-    0088  BEQ mul_end
-    008A  LDA mul_result
-    008C  ADD mul_temp
-    008E  STA mul_result
-    0090  DEC mul_counter
-    0092  JMP mul_loop
-    0094  LDA mul_result
-    0096  RTS
-    0097  LDA $6DE0
-    0099  CMP $6DE1
-    009B  BCC break_mod
-    009D  SUB $6DE1
-    009F  JMP mod_loop
-    00A1  RTS
-    00A2  LDX $6DE0
-    00A4  DEX
-    00A5  BEQ wait_end
-    00A7  NOP
-    00A8  NOP
-    00A9  NOP
-    00AA  NOP
-    00AB  JMP wait_loop
-    00AD  RTS
+.bit_index   5A00
+.bit_indexStart = $B577
+.bit_index_sc   5A01
+.bit_sc_width = 36
+.bit_sc_height = 18
+.pix_index   5A02
+.pix_indexStart = $B800
+.pix_index_sc   5A03
+.pix_sc_width = 256
+.pix_sc_height = 144
+.rand_seed   5A04
+.rand_temp   5A05
+.KBD   5A06
+.KBDCR   5A07
+    0000  UBS
+    0001  LDA #$b2
+    0003  STA rand_seed
+    0005  JMP $5280
+.str_char   5A08
+.str_msg   5A09
+    0007  LDA $6DE0
+    0009  STA str_msg
+    000B  LDA [str_msg], X
+    000D  BEQ print_str_done
+    000F  STA str_char
+    0011  LDA str_char
+    0013  STA $6DE0
+    0015  JSR print_char
+    0017  INX
+    0018  JMP print_str_loop
+    001A  LDX #0
+    001C  RTS
+    001D  LDA $6DE0
+    001F  STA $6DE0
+    0021  JSR set_char
+    0023  INC bit_index
+    0025  RTS
+    0026  LDA bit_index
+    0028  ADD #(bit_indexStart)
+    002A  STA bit_index_sc
+    002C  CMP #$B7FF
+    002E  BCS bit_cls_bios
+    0030  LDA $6DE0
+    0032  CMP #$FE
+    0034  BEQ return_bios
+    0036  CMP #$FF
+    0038  BEQ backspace_bios
+    003A  CMP #$FD
+    003C  BEQ set_char_end
+    003E  STA [bit_index_sc], 0
+    0040  RTS
+    0041  CLS
+    0042  LDA #00
+    0044  STA bit_index
+    0046  LDA #(bit_indexStart)
+    0048  STA bit_index_sc
+    004A  RTS
+    004B  JSR bit_clear_screen
+    004D  JMP sc_cls_bios_end
+.mod_val   5A0A
+    004F  PHA
+    0050  LDA bit_index
+    0052  STA $6DE0
+    0054  LDA #(bit_sc_width)
+    0056  STA $6DE1
+    0058  JSR mod
+    005A  STA mod_val
+    005C  LDA #(bit_sc_width)
+    005E  SUB mod_val
+    0060  ADD bit_index
+    0062  STA bit_index
+    0064  CMP #(bit_sc_width*bit_sc_height)
+    0066  BNE check_pix_end
+    0068  LDA #0
+    006A  STA bit_index
+    006C  CNP
+    006D  PLA
+    006E  RTS
+    006F  JSR bit_new_line
+    0071  DEC bit_index
+    0073  JMP set_char_end
+    0075  DEC bit_index
+    0077  LDA #0
+    0079  STA $6DE0
+    007B  JSR set_char
+    007D  DEC bit_index
+    007F  JMP set_char_end
+    0081  LDA $6DE0
+    0083  STA $6DE0
+    0085  JSR set_pix
+    0087  INC pix_index
+    0089  RTS
+.pix_value_temp   5A0B
+    008A  LDA pix_index
+    008C  SRA #1
+    008E  ADD #(pix_indexStart)
+    0090  STA pix_index_sc
+    0092  BCS PIX_RESET_BIOS
+    0094  LDA pix_index
+    0096  AND #1
+    0098  BEQ SET_PIX_RIGHT_SIDE
+    009A  LDA [pix_index_sc], 0
+    009C  AND #$FF00
+    009E  ORA $6DE0
+    00A0  STA [pix_index_sc], 0
+    00A2  JMP SET_PIX_END
+    00A4  LDA [pix_index_sc], 0
+    00A6  AND #$00FF
+    00A8  STA pix_value_temp
+    00AA  LDA $6DE0
+    00AC  SLA #8
+    00AE  ADD pix_value_temp
+    00B0  STA [pix_index_sc], 0
+    00B2  RTS
+    00B3  DUP
+    00B4  CLS
+    00B5  LDA #00
+    00B7  STA pix_index
+    00B9  LDA #(pix_indexStart)
+    00BB  STA pix_index_sc
+    00BD  RTS
+    00BE  JSR PIX_CLEAR_SCREEN
+    00C0  JMP PIX_RESET_BIOS_END
+.mul_temp   5A0C
+.mul_counter   5A0D
+.mul_result   5A0E
+    00C2  STA mul_temp
+    00C4  STX mul_counter
+    00C6  LDA #0
+    00C8  STA mul_result
+    00CA  LDA mul_counter
+    00CC  BEQ mul_end
+    00CE  LDA mul_result
+    00D0  ADD mul_temp
+    00D2  STA mul_result
+    00D4  DEC mul_counter
+    00D6  JMP mul_loop
+    00D8  LDA mul_result
+    00DA  RTS
+    00DB  LDA $6DE0
+    00DD  CMP $6DE1
+    00DF  BCC break_mod
+    00E1  SUB $6DE1
+    00E3  JMP mod_loop
+    00E5  RTS
+    00E6  LDA rand_temp
+    00E8  LDX #173
+    00EA  JSR multiply
+    00EC  ADD #13849
+    00EE  STA rand_seed
+    00F0  RTS
+    00F1  RTS
+    00F2  LDX $6DE0
+    00F4  DEX
+    00F5  BEQ wait_end
+    00F7  NOP
+    00F8  NOP
+    00F9  NOP
+    00FA  NOP
+    00FB  JMP wait_loop
+    00FD  RTS
+` $3000
+.bhd_pix_value   5A0F
+    3000  UPS
+    3001  LDA #$FF
+    3003  STA bhd_pix_value
+    3005  LDA bhd_pix_value
+    3007  STA $6DE0
+    3009  JSR print_pix
+    300B  JMP bhd_LOOP
+    300D  HLT
 ` $3900
-.pong_player_pos   5A0D
-.pong_star_pos   5A0E
-.pong_leftTile_pos   5A0F
-.pong_rightTile_pos   5A10
-.pong_ball_xpos   5A11
-.pong_ball_ypos   5A12
-.pong_ball_xdir   5A13
-.pong_ball_ydir   5A14
+.pong_player_pos   5A10
+.pong_star_pos   5A11
+.pong_leftTile_pos   5A12
+.pong_rightTile_pos   5A13
+.pong_ball_xpos   5A14
+.pong_ball_ypos   5A15
+.pong_ball_xdir   5A16
+.pong_ball_ydir   5A17
 .pong_ball_updatedelay = 10000
-.pong_ball_updatedelay_i   5A15
-.pong_leftscore   5A16
-.pong_rightscore   5A17
-.pong_gamesWon   5A18
-.pong_gamesPlayed   5A19
-    3900  JSR clear_screen
+.pong_ball_updatedelay_i   5A18
+.pong_leftscore   5A19
+.pong_rightscore   5A1A
+.pong_gamesWon   5A1B
+.pong_gamesPlayed   5A1C
+    3900  JSR bit_clear_screen
     3902  LDA #(pong_str_TITLE)
     3904  JSR ECHOSTR
     3906  LDA #(pong_str_HELP)
     3908  JSR ECHOSTR
     390A  LDA #(36*16)
-    390C  STA index
+    390C  STA bit_index
     390E  LDA #(pong_str_T_GAMES_WON)
     3910  JSR ECHOSTR
     3912  LDA pong_gamesWon
@@ -144,485 +201,495 @@
     391C  JSR ECHOSTR
     391E  LDA pong_gamesPlayed
     3920  JSR PRBYTE
-    3922  LDA KBDCR
-    3924  BEQ pong_MAIN_MENU_LOOP
-    3926  DEC KBDCR
-    3928  LDA KBD
-    392A  CMP #$B
-    392C  BEQ pong_NEWGAME_START
-    392E  CMP #$C
-    3930  BEQ pong_GAME_EXIT
-    3932  JMP pong_MAIN_MENU_LOOP
-    3934  LDA #0
-    3936  STA pong_leftscore
-    3938  STA pong_rightscore
-    393A  LDA #21
-    393C  STA pong_ball_xpos
-    393E  LDA #12
-    3940  STA pong_ball_ypos
-    3942  LDA #(pong_ball_updatedelay)
-    3944  STA pong_ball_updatedelay_i
-    3946  LDA #$8
-    3948  STA pong_leftTile_pos
-    394A  LDA #$8
-    394C  STA pong_rightTile_pos
-    394E  JSR pong_DRAW_ALL
-    3950  LDA #$FFFF
-    3952  STA $6DE0
-    3954  JSR wait
-    3956  DEC pong_ball_updatedelay_i
-    3958  BEQ pong_UPDATE_BALL
-    395A  LDA KBDCR
-    395C  BEQ pong_MAIN_LOOP
-    395E  DEC KBDCR
-    3960  LDA KBD
-    3962  CMP #64
-    3964  BEQ pong_MOVE_UP
-    3966  CMP #60
-    3968  BEQ pong_MOVE_DOWN
-    396A  CMP #57
-    396C  BEQ pong_MAIN_MENU
-    396E  JMP pong_MAIN_LOOP
-    3970  LDA pong_leftTile_pos
-    3972  JSR pong_CHECK_Y_EDGE
-    3974  BEQ pong_UPDATE
-    3976  SUB #2
-    3978  STA pong_leftTile_pos
-    397A  JMP pong_UPDATE
-    397C  LDA pong_leftTile_pos
-    397E  ADD #3
-    3980  JSR pong_CHECK_Y_EDGE
-    3982  BEQ pong_UPDATE
-    3984  SUB #1
-    3986  STA pong_leftTile_pos
-    3988  JMP pong_UPDATE
-    398A  JSR pong_CHECK_HIT
-    398C  JSR pong_DRAW_ALL
-    398E  JMP pong_MAIN_LOOP
-    3990  LDA pong_ball_xpos
-    3992  CMP #1
-    3994  BEQ pong_CHECK_LEFT_COLLISION
-    3996  CMP #34
-    3998  BNE pong_NO_HIT
-    399A  LDA pong_ball_ypos
-    399C  SUB pong_rightTile_pos
-    399E  CMP #3
-    39A0  BCS pong_NO_HIT
-    39A2  JMP pong_BALL_REVX
-    39A4  LDA pong_ball_ypos
-    39A6  SUB pong_leftTile_pos
-    39A8  CMP #3
-    39AA  BCS pong_NO_HIT
-    39AC  JMP pong_BALL_REVX
-    39AE  RTS
-    39AF  LDA pong_ball_xdir
-    39B1  CMP #0
-    39B3  BEQ pong_LEFT_WALL_HIT
-    39B5  INC pong_leftscore
-    39B7  LDA pong_leftscore
-    39B9  CMP #10
-    39BB  BEQ pong_GAME_WIN
-    39BD  JMP pong_GAME_START
-    39BF  INC pong_rightscore
-    39C1  LDA pong_rightscore
-    39C3  CMP #10
-    39C5  BEQ pong_GAME_LOOSE
-    39C7  JMP pong_GAME_START
-    39C9  JSR clear_screen
-    39CB  LDA #(36*8+3)
-    39CD  STA index
-    39CF  LDA #(pong_str_GAME_WON)
-    39D1  JSR ECHOSTR
-    39D3  INC pong_gamesPlayed
-    39D5  INC pong_gamesWon
-    39D7  LDA #$FFFF
-    39D9  STA $6DE0
-    39DB  JSR wait
-    39DD  LDA #$FFFF
-    39DF  STA $6DE0
-    39E1  JSR wait
-    39E3  JMP pong_MAIN_MENU
-    39E5  JSR clear_screen
-    39E7  LDA #(36*8+1)
-    39E9  STA index
-    39EB  LDA #(pong_str_GAME_LOST)
-    39ED  JSR ECHOSTR
-    39EF  INC pong_gamesPlayed
-    39F1  LDA #$FFFF
-    39F3  STA $6DE0
-    39F5  JSR wait
-    39F7  LDA #$FFFF
-    39F9  STA $6DE0
-    39FB  JSR wait
-    39FD  JMP pong_MAIN_MENU
-    39FF  JSR clear_screen
-    3A01  LDA #(18-4)
-    3A03  STA index
-    3A05  LDA pong_leftscore
-    3A07  JSR PRBYTE
-    3A09  LDA index
-    3A0B  ADD #5
-    3A0D  STA index
-    3A0F  LDA pong_rightscore
-    3A11  JSR PRBYTE
-    3A13  LDA #36
-    3A15  LDX pong_ball_ypos
-    3A17  JSR multiply
-    3A19  ADD pong_ball_xpos
-    3A1B  STA index
-    3A1D  LDA #3
-    3A1F  JSR ECHO
-    3A21  LDA #18
-    3A23  STA index
-    3A25  LDA #26
-    3A27  JSR ECHO
-    3A29  LDA index
-    3A2B  CMP #$270
-    3A2D  BCS pong_DRAW_MIDDLE_LINE_END
-    3A2F  ADD #35
-    3A31  STA index
-    3A33  JMP pong_DRAW_MIDDLE_LINE_LOOP
-    3A35  LDA #36
-    3A37  LDX pong_leftTile_pos
-    3A39  JSR multiply
-    3A3B  JSR pong_DRAW_TILE
-    3A3D  LDA #36
-    3A3F  LDX pong_rightTile_pos
-    3A41  JSR multiply
-    3A43  ADD #35
-    3A45  JSR pong_DRAW_TILE
-    3A47  RTS
-    3A48  LDA pong_ball_ypos
-    3A4A  SUB #1
-    3A4C  JSR pong_CHECK_Y_EDGE
-    3A4E  BEQ pong_RIGHT_TILE_SKIP
-    3A50  ADD #1
-    3A52  JSR pong_CHECK_Y_EDGE
-    3A54  BEQ pong_RIGHT_TILE_SKIP
-    3A56  SUB #2
-    3A58  STA pong_rightTile_pos
-    3A5A  LDA pong_ball_xdir
-    3A5C  BEQ pong_BALL_MOVELEFT
-    3A5E  LDA pong_ball_xpos
-    3A60  ADD #1
-    3A62  JMP pong_BALL_MOVEXEND
-    3A64  LDA pong_ball_xpos
-    3A66  SUB #1
-    3A68  STA pong_ball_xpos
-    3A6A  JSR pong_CHECK_X_EDGE
-    3A6C  BEQ pong_WALL_HIT
-    3A6E  LDA pong_ball_ydir
-    3A70  BEQ pong_BALL_MOVEUP
-    3A72  LDA pong_ball_ypos
-    3A74  ADD #1
-    3A76  JMP pong_BALL_MOVEYEND
-    3A78  LDA pong_ball_ypos
-    3A7A  SUB #1
-    3A7C  STA pong_ball_ypos
-    3A7E  JSR pong_CHECK_Y_EDGE
-    3A80  BEQ pong_BALL_REVY
-    3A82  LDA #(pong_ball_updatedelay)
-    3A84  STA pong_ball_updatedelay_i
-    3A86  JMP pong_UPDATE
-    3A88  LDX pong_ball_xdir
-    3A8A  BNE pong_BALL_REVLEFT
-    3A8C  INC pong_ball_xdir
-    3A8E  RTS
-    3A8F  DEC pong_ball_xdir
-    3A91  RTS
-    3A92  LDX pong_ball_ydir
-    3A94  BNE pong_BALL_REVUP
-    3A96  INC pong_ball_ydir
-    3A98  JMP pong_BALL_REVYEND
-    3A9A  DEC pong_ball_ydir
-    3A9C  JMP pong_BALL_REVYEND
-    3A9E  STA index
-    3AA0  LDX #4
-    3AA2  BEQ pong_DRAW_TILE_END
-    3AA4  LDA #39
-    3AA6  JSR ECHO
-    3AA8  LDA index
-    3AAA  ADD #35
-    3AAC  STA index
-    3AAE  DEX
-    3AAF  JSR pong_DRAW_TILE_LOOP
-    3AB1  RTS
-    3AB2  BEQ pong_CHECK_X_BOUNDS_FAILED
-    3AB4  BCS pong_CHECK_X_BOUNDS_FAILED
-    3AB6  CMP #(sc_width-1)
-    3AB8  BCS pong_CHECK_X_BOUNDS_FAILED
-    3ABA  LDX #1
-    3ABC  RTS
-    3ABD  LDX #0
-    3ABF  RTS
-    3AC0  BEQ pong_CHECK_Y_BOUNDS_FAILED
-    3AC2  BCS pong_CHECK_Y_BOUNDS_FAILED
-    3AC4  CMP #(sc_height-1)
-    3AC6  BCS pong_CHECK_Y_BOUNDS_FAILED
-    3AC8  LDX #1
-    3ACA  RTS
-    3ACB  LDX #0
-    3ACD  RTS
-    3ACE  : "          ====== PONG ======%%%\"
-    3AD0  : "W A TO MOVE UP AND DOWN%%1. PLAY%%2. EXIT%\"
-    3AD2  : "== CONGRATULATIONS. YOU WON ==%\"
-    3AD4  : "OH. YOU LOST. BETTER LUCK NEXT TIME%\"
-    3AD6  : "GAMES WON: \"
-    3AD8  : "GAMES PLAYED: \"
+    3922  DUP
+    3923  LDA KBDCR
+    3925  BEQ pong_MAIN_MENU_LOOP
+    3927  DEC KBDCR
+    3929  LDA KBD
+    392B  CMP #$B
+    392D  BEQ pong_NEWGAME_START
+    392F  CMP #$C
+    3931  BEQ pong_GAME_EXIT
+    3933  JMP pong_MAIN_MENU_LOOP
+    3935  LDA #0
+    3937  STA pong_leftscore
+    3939  STA pong_rightscore
+    393B  LDA #21
+    393D  STA pong_ball_xpos
+    393F  LDA #12
+    3941  STA pong_ball_ypos
+    3943  LDA #(pong_ball_updatedelay)
+    3945  STA pong_ball_updatedelay_i
+    3947  LDA #$8
+    3949  STA pong_leftTile_pos
+    394B  LDA #$8
+    394D  STA pong_rightTile_pos
+    394F  JSR pong_DRAW_ALL
+    3951  LDA #$FFFF
+    3953  STA $6DE0
+    3955  JSR wait
+    3957  DEC pong_ball_updatedelay_i
+    3959  BEQ pong_UPDATE_BALL
+    395B  LDA KBDCR
+    395D  BEQ pong_MAIN_LOOP
+    395F  DEC KBDCR
+    3961  LDA KBD
+    3963  CMP #64
+    3965  BEQ pong_MOVE_UP
+    3967  CMP #60
+    3969  BEQ pong_MOVE_DOWN
+    396B  CMP #57
+    396D  BEQ pong_MAIN_MENU
+    396F  JMP pong_MAIN_LOOP
+    3971  LDA pong_leftTile_pos
+    3973  JSR pong_CHECK_Y_EDGE
+    3975  BEQ pong_UPDATE
+    3977  SUB #2
+    3979  STA pong_leftTile_pos
+    397B  JMP pong_UPDATE
+    397D  LDA pong_leftTile_pos
+    397F  ADD #3
+    3981  JSR pong_CHECK_Y_EDGE
+    3983  BEQ pong_UPDATE
+    3985  SUB #1
+    3987  STA pong_leftTile_pos
+    3989  JMP pong_UPDATE
+    398B  JSR pong_CHECK_HIT
+    398D  JSR pong_DRAW_ALL
+    398F  JMP pong_MAIN_LOOP
+    3991  LDA pong_ball_xpos
+    3993  CMP #1
+    3995  BEQ pong_CHECK_LEFT_COLLISION
+    3997  CMP #34
+    3999  BNE pong_NO_HIT
+    399B  LDA pong_ball_ypos
+    399D  SUB pong_rightTile_pos
+    399F  CMP #3
+    39A1  BCS pong_NO_HIT
+    39A3  JMP pong_BALL_REVX
+    39A5  LDA pong_ball_ypos
+    39A7  SUB pong_leftTile_pos
+    39A9  CMP #3
+    39AB  BCS pong_NO_HIT
+    39AD  JMP pong_BALL_REVX
+    39AF  RTS
+    39B0  LDA pong_ball_xdir
+    39B2  CMP #0
+    39B4  BEQ pong_LEFT_WALL_HIT
+    39B6  INC pong_leftscore
+    39B8  LDA pong_leftscore
+    39BA  CMP #10
+    39BC  BEQ pong_GAME_WIN
+    39BE  JMP pong_GAME_START
+    39C0  INC pong_rightscore
+    39C2  LDA pong_rightscore
+    39C4  CMP #10
+    39C6  BEQ pong_GAME_LOOSE
+    39C8  JMP pong_GAME_START
+    39CA  JSR bit_clear_screen
+    39CC  LDA #(36*8+3)
+    39CE  STA bit_index
+    39D0  LDA #(pong_str_GAME_WON)
+    39D2  JSR ECHOSTR
+    39D4  INC pong_gamesPlayed
+    39D6  INC pong_gamesWon
+    39D8  LDA #$FFFF
+    39DA  STA $6DE0
+    39DC  JSR wait
+    39DE  LDA #$FFFF
+    39E0  STA $6DE0
+    39E2  JSR wait
+    39E4  JMP pong_MAIN_MENU
+    39E6  JSR bit_clear_screen
+    39E8  LDA #(36*8+1)
+    39EA  STA bit_index
+    39EC  LDA #(pong_str_GAME_LOST)
+    39EE  JSR ECHOSTR
+    39F0  INC pong_gamesPlayed
+    39F2  LDA #$FFFF
+    39F4  STA $6DE0
+    39F6  JSR wait
+    39F8  LDA #$FFFF
+    39FA  STA $6DE0
+    39FC  JSR wait
+    39FE  JMP pong_MAIN_MENU
+    3A00  JSR bit_clear_screen
+    3A02  LDA #(18-4)
+    3A04  STA bit_index
+    3A06  LDA pong_leftscore
+    3A08  JSR PRBYTE
+    3A0A  LDA bit_index
+    3A0C  ADD #5
+    3A0E  STA bit_index
+    3A10  LDA pong_rightscore
+    3A12  JSR PRBYTE
+    3A14  LDA #36
+    3A16  LDX pong_ball_ypos
+    3A18  JSR multiply
+    3A1A  ADD pong_ball_xpos
+    3A1C  STA bit_index
+    3A1E  LDA #3
+    3A20  JSR ECHO
+    3A22  LDA #18
+    3A24  STA bit_index
+    3A26  LDA #26
+    3A28  JSR ECHO
+    3A2A  LDA bit_index
+    3A2C  CMP #$270
+    3A2E  BCS pong_DRAW_MIDDLE_LINE_END
+    3A30  ADD #35
+    3A32  STA bit_index
+    3A34  JMP pong_DRAW_MIDDLE_LINE_LOOP
+    3A36  LDA #36
+    3A38  LDX pong_leftTile_pos
+    3A3A  JSR multiply
+    3A3C  JSR pong_DRAW_TILE
+    3A3E  LDA #36
+    3A40  LDX pong_rightTile_pos
+    3A42  JSR multiply
+    3A44  ADD #35
+    3A46  JSR pong_DRAW_TILE
+    3A48  DUP
+    3A49  RTS
+    3A4A  LDA pong_ball_ypos
+    3A4C  SUB #1
+    3A4E  JSR pong_CHECK_Y_EDGE
+    3A50  BEQ pong_RIGHT_TILE_SKIP
+    3A52  ADD #1
+    3A54  JSR pong_CHECK_Y_EDGE
+    3A56  BEQ pong_RIGHT_TILE_SKIP
+    3A58  SUB #2
+    3A5A  STA pong_rightTile_pos
+    3A5C  LDA pong_ball_xdir
+    3A5E  BEQ pong_BALL_MOVELEFT
+    3A60  LDA pong_ball_xpos
+    3A62  ADD #1
+    3A64  JMP pong_BALL_MOVEXEND
+    3A66  LDA pong_ball_xpos
+    3A68  SUB #1
+    3A6A  STA pong_ball_xpos
+    3A6C  JSR pong_CHECK_X_EDGE
+    3A6E  BEQ pong_WALL_HIT
+    3A70  LDA pong_ball_ydir
+    3A72  BEQ pong_BALL_MOVEUP
+    3A74  LDA pong_ball_ypos
+    3A76  ADD #1
+    3A78  JMP pong_BALL_MOVEYEND
+    3A7A  LDA pong_ball_ypos
+    3A7C  SUB #1
+    3A7E  STA pong_ball_ypos
+    3A80  JSR pong_CHECK_Y_EDGE
+    3A82  BEQ pong_BALL_REVY
+    3A84  LDA #(pong_ball_updatedelay)
+    3A86  STA pong_ball_updatedelay_i
+    3A88  JMP pong_UPDATE
+    3A8A  LDX pong_ball_xdir
+    3A8C  BNE pong_BALL_REVLEFT
+    3A8E  INC pong_ball_xdir
+    3A90  RTS
+    3A91  DEC pong_ball_xdir
+    3A93  RTS
+    3A94  LDX pong_ball_ydir
+    3A96  BNE pong_BALL_REVUP
+    3A98  INC pong_ball_ydir
+    3A9A  JMP pong_BALL_REVYEND
+    3A9C  DEC pong_ball_ydir
+    3A9E  JMP pong_BALL_REVYEND
+    3AA0  STA bit_index
+    3AA2  LDX #4
+    3AA4  BEQ pong_DRAW_TILE_END
+    3AA6  LDA #39
+    3AA8  JSR ECHO
+    3AAA  LDA bit_index
+    3AAC  ADD #35
+    3AAE  STA bit_index
+    3AB0  DEX
+    3AB1  JSR pong_DRAW_TILE_LOOP
+    3AB3  RTS
+    3AB4  BEQ pong_CHECK_X_BOUNDS_FAILED
+    3AB6  BCS pong_CHECK_X_BOUNDS_FAILED
+    3AB8  CMP #(bit_sc_width-1)
+    3ABA  BCS pong_CHECK_X_BOUNDS_FAILED
+    3ABC  LDX #1
+    3ABE  RTS
+    3ABF  LDX #0
+    3AC1  RTS
+    3AC2  BEQ pong_CHECK_Y_BOUNDS_FAILED
+    3AC4  BCS pong_CHECK_Y_BOUNDS_FAILED
+    3AC6  CMP #(bit_sc_height-1)
+    3AC8  BCS pong_CHECK_Y_BOUNDS_FAILED
+    3ACA  LDX #1
+    3ACC  RTS
+    3ACD  LDX #0
+    3ACF  RTS
+    3AD0  : "          ====== PONG ======%%%\"
+    3AD2  : "W A TO MOVE UP AND DOWN%%1. PLAY%%2. EXIT%\"
+    3AD4  : "== CONGRATULATIONS. YOU WON ==%\"
+    3AD6  : "OH. YOU LOST. BETTER LUCK NEXT TIME%\"
+    3AD8  : "GAMES WON: \"
+    3ADA  : "GAMES PLAYED: \"
 ` $4C00
-.cts_apple_pos   5A1A
-.cts_score   5A1B
-.cts_snake_head_x   5A1C
-.cts_snake_head_y   5A1D
-.cts_snake_head_pos   5A1E
-.cts_snake_direction   5A1F
-.cts_snake_direction_next   5A20
-.cts_arr_snk_body_x = $4500
-.cts_arr_snk_body_y = $4800
-.cts_snk_body_len   5A21
-.cts_snk_body_tail_x   5A22
-.cts_snk_body_tail_y   5A23
+.cts_apple_pos   5A1D
+.cts_score   5A1E
+.cts_snake_head_x   5A1F
+.cts_snake_head_y   5A20
+.cts_snake_head_pos   5A21
+.cts_snake_direction   5A22
+.cts_snake_direction_next   5A23
+.cts_arr_snk_body_pos = $4500
+.cts_snk_body_len   5A24
+.cts_snk_body_tail_pos   5A25
 .cts_snake_update_delay = 30000
-.cts_snake_update_delay_i   5A24
-.cts_A_temp   5A25
-    4C00  JSR clear_screen
+.cts_snake_update_delay_i   5A26
+.cts_A_temp   5A27
+    4C00  JSR bit_clear_screen
     4C02  LDA #(cts_TITLE)
     4C04  JSR ECHOSTR
     4C06  LDA #(cts_HELP)
     4C08  JSR ECHOSTR
-    4C0A  LDA KBDCR
-    4C0C  BEQ cts_MAIN_MENU_LOOP
-    4C0E  DEC KBDCR
-    4C10  LDA KBD
-    4C12  CMP #$B
-    4C14  BEQ cts_GAME_START
-    4C16  CMP #$C
-    4C18  BEQ cts_GAME_END
-    4C1A  JMP cts_MAIN_MENU_LOOP
-    4C1C  LDA #17
-    4C1E  STA cts_snake_head_x
-    4C20  LDA #9
-    4C22  STA cts_snake_head_y
-    4C24  LDA #(36*9+17)
-    4C26  STA cts_snake_head_pos
-    4C28  LDA #0
-    4C2A  STA cts_snake_direction
-    4C2C  STA cts_snake_direction_next
-    4C2E  LDA #2
-    4C30  STA cts_snk_body_len
-    4C32  LDX cts_snake_head_x
-    4C34  DEX
-    4C35  STX cts_arr_snk_body_x
-    4C37  DEX
-    4C38  STX (cts_arr_snk_body_x+1)
-    4C3A  LDA cts_snake_head_y
-    4C3C  STA cts_arr_snk_body_y
-    4C3E  STA (cts_arr_snk_body_y+1)
-    4C40  LDA #100
-    4C42  STA cts_apple_pos
-    4C44  JSR cts_RESPAWN_APPLE
-    4C46  LDA #0
-    4C48  STA cts_score
-    4C4A  LDA #(cts_snake_update_delay)
-    4C4C  STA cts_snake_update_delay_i
-    4C4E  JSR cts_DRAW_ALL
-    4C50  DEC cts_snake_update_delay_i
-    4C52  BEQ cts_UPDATE_SNAKE
-    4C54  LDA KBDCR
-    4C56  BEQ cts_MAIN_LOOP
-    4C58  DEC KBDCR
-    4C5A  LDA KBD
-    4C5C  CMP #64
-    4C5E  BEQ cts_TURN_UP
-    4C60  CMP #60
-    4C62  BEQ cts_TURN_DOWN
-    4C64  CMP #42
-    4C66  BEQ cts_TURN_LEFT
-    4C68  CMP #45
-    4C6A  BEQ cts_TURN_RIGHT
-    4C6C  CMP #57
-    4C6E  BEQ cts_MAIN_MENU
-    4C70  JMP cts_MAIN_LOOP
-    4C72  LDA cts_snake_direction
-    4C74  CMP #3
-    4C76  BEQ cts_MAIN_LOOP
-    4C78  LDA #1
-    4C7A  STA cts_snake_direction_next
-    4C7C  JMP cts_MAIN_LOOP
-    4C7E  LDA cts_snake_direction
-    4C80  CMP #4
-    4C82  BEQ cts_MAIN_LOOP
-    4C84  LDA #2
-    4C86  STA cts_snake_direction_next
-    4C88  JMP cts_MAIN_LOOP
-    4C8A  LDA cts_snake_direction
-    4C8C  CMP #1
-    4C8E  BEQ cts_MAIN_LOOP
-    4C90  LDA #3
-    4C92  STA cts_snake_direction_next
-    4C94  JMP cts_MAIN_LOOP
-    4C96  LDA cts_snake_direction
-    4C98  BEQ cts_TURN_RIGHT
-    4C9A  CMP #2
-    4C9C  BEQ cts_MAIN_LOOP
-    4C9E  LDA #4
-    4CA0  STA cts_snake_direction_next
-    4CA2  JMP cts_MAIN_LOOP
-    4CA4  LDA #(cts_snake_update_delay)
-    4CA6  STA cts_snake_update_delay_i
-    4CA8  LDA cts_snake_direction_next
-    4CAA  STA cts_snake_direction
-    4CAC  LDX cts_snk_body_len
-    4CAE  BEQ cts_SNK_TAIL_BAKUP_END
-    4CB0  DEX
-    4CB1  LDA [cts_arr_snk_body_x, X]
-    4CB3  STA cts_snk_body_tail_x
-    4CB5  LDA [cts_arr_snk_body_y, X]
-    4CB7  STA cts_snk_body_tail_y
-    4CB9  JSR cts_UPDATE_SNAKE_BODY
-    4CBB  LDA cts_snake_direction
-    4CBD  BEQ cts_MAIN_LOOP
-    4CBF  CMP #1
-    4CC1  BEQ cts_MOVE_UP
-    4CC3  CMP #2
-    4CC5  BEQ cts_MOVE_RIGHT
-    4CC7  CMP #3
-    4CC9  BEQ cts_MOVE_DOWN
-    4CCB  CMP #4
-    4CCD  BEQ cts_MOVE_LEFT
-    4CCF  JSR cts_CHECK_HIT
-    4CD1  LDA #36
-    4CD3  LDX cts_snake_head_y
-    4CD5  JSR multiply
-    4CD7  ADD cts_snake_head_x
-    4CD9  STA cts_snake_head_pos
-    4CDB  JSR cts_DRAW_ALL
-    4CDD  JMP cts_MAIN_LOOP
-    4CDF  LDX cts_snk_body_len
-    4CE1  BEQ cts_UPDATE_SNAKE_BODY_END
-    4CE3  DEX
-    4CE4  BEQ cts_UPDATE_SNAKE_BODY_LOOP_END
-    4CE6  DEX
-    4CE7  LDA [cts_arr_snk_body_x, X]
-    4CE9  LDY [cts_arr_snk_body_y, X]
-    4CEB  INX
-    4CEC  STA [cts_arr_snk_body_x, X]
-    4CEE  STY [cts_arr_snk_body_y, X]
-    4CF0  DEX
-    4CF1  BEQ cts_UPDATE_SNAKE_BODY_LOOP_END
-    4CF3  JMP cts_UDPATE_SNAKE_BODY_LOOP
-    4CF5  LDA cts_snake_head_x
-    4CF7  STA cts_arr_snk_body_x
+    4C0A  DUP
+    4C0B  LDA KBDCR
+    4C0D  BEQ cts_MAIN_MENU_LOOP
+    4C0F  DEC KBDCR
+    4C11  LDA KBD
+    4C13  CMP #$B
+    4C15  BEQ cts_GAME_START
+    4C17  CMP #$C
+    4C19  BEQ cts_GAME_END
+    4C1B  JMP cts_MAIN_MENU_LOOP
+    4C1D  LDA #17
+    4C1F  STA cts_snake_head_x
+    4C21  LDA #9
+    4C23  STA cts_snake_head_y
+    4C25  LDA #(36*9+17)
+    4C27  STA cts_snake_head_pos
+    4C29  LDA #0
+    4C2B  STA cts_snake_direction
+    4C2D  STA cts_snake_direction_next
+    4C2F  LDA #2
+    4C31  STA cts_snk_body_len
+    4C33  LDX cts_snake_head_pos
+    4C35  DEX
+    4C36  STX cts_arr_snk_body_pos
+    4C38  DEX
+    4C39  STX (cts_arr_snk_body_pos+1)
+    4C3B  LDA #100
+    4C3D  STA cts_apple_pos
+    4C3F  JSR cts_RESPAWN_APPLE
+    4C41  LDA #0
+    4C43  STA cts_score
+    4C45  LDA #(cts_snake_update_delay)
+    4C47  STA cts_snake_update_delay_i
+    4C49  LDY #0
+    4C4B  JSR cts_DRAW_ALL
+    4C4D  DEC cts_snake_update_delay_i
+    4C4F  BEQ cts_UPDATE_SNAKE
+    4C51  LDA KBDCR
+    4C53  BEQ cts_MAIN_LOOP
+    4C55  DEC KBDCR
+    4C57  LDA KBD
+    4C59  CMP #64
+    4C5B  BEQ cts_TURN_UP
+    4C5D  CMP #60
+    4C5F  BEQ cts_TURN_DOWN
+    4C61  CMP #42
+    4C63  BEQ cts_TURN_LEFT
+    4C65  CMP #45
+    4C67  BEQ cts_TURN_RIGHT
+    4C69  CMP #57
+    4C6B  BEQ cts_MAIN_MENU
+    4C6D  JMP cts_MAIN_LOOP
+    4C6F  LDA cts_snake_direction
+    4C71  CMP #3
+    4C73  BEQ cts_MAIN_LOOP
+    4C75  LDA #1
+    4C77  STA cts_snake_direction_next
+    4C79  JMP cts_MAIN_LOOP
+    4C7B  LDA cts_snake_direction
+    4C7D  CMP #4
+    4C7F  BEQ cts_MAIN_LOOP
+    4C81  LDA #2
+    4C83  STA cts_snake_direction_next
+    4C85  JMP cts_MAIN_LOOP
+    4C87  LDA cts_snake_direction
+    4C89  CMP #1
+    4C8B  BEQ cts_MAIN_LOOP
+    4C8D  LDA #3
+    4C8F  STA cts_snake_direction_next
+    4C91  JMP cts_MAIN_LOOP
+    4C93  LDA cts_snake_direction
+    4C95  BEQ cts_TURN_RIGHT
+    4C97  CMP #2
+    4C99  BEQ cts_MAIN_LOOP
+    4C9B  LDA #4
+    4C9D  STA cts_snake_direction_next
+    4C9F  JMP cts_MAIN_LOOP
+    4CA1  LDA #(cts_snake_update_delay)
+    4CA3  STA cts_snake_update_delay_i
+    4CA5  LDA cts_snake_direction_next
+    4CA7  STA cts_snake_direction
+    4CA9  LDX cts_snk_body_len
+    4CAB  BEQ cts_SNK_TAIL_BAKUP_END
+    4CAD  DEX
+    4CAE  LDA [cts_arr_snk_body_pos, X]
+    4CB0  STA cts_snk_body_tail_pos
+    4CB2  JSR cts_UPDATE_SNAKE_BODY
+    4CB4  LDA cts_snake_direction
+    4CB6  BEQ cts_MAIN_LOOP
+    4CB8  CMP #1
+    4CBA  BEQ cts_MOVE_UP
+    4CBC  CMP #2
+    4CBE  BEQ cts_MOVE_RIGHT
+    4CC0  CMP #3
+    4CC2  BEQ cts_MOVE_DOWN
+    4CC4  CMP #4
+    4CC6  BEQ cts_MOVE_LEFT
+    4CC8  JSR cts_CHECK_HIT
+    4CCA  LDA #36
+    4CCC  LDX cts_snake_head_y
+    4CCE  JSR multiply
+    4CD0  ADD cts_snake_head_x
+    4CD2  STA cts_snake_head_pos
+    4CD4  LDY #0
+    4CD6  JSR cts_DRAW_ALL
+    4CD8  JMP cts_MAIN_LOOP
+    4CDA  LDX cts_snk_body_len
+    4CDC  BEQ cts_UPDATE_SNAKE_BODY_END
+    4CDE  DEX
+    4CDF  BEQ cts_UPDATE_SNAKE_BODY_LOOP_END
+    4CE1  DEX
+    4CE2  LDA [cts_arr_snk_body_pos, X]
+    4CE4  INX
+    4CE5  STA [cts_arr_snk_body_pos, X]
+    4CE7  DEX
+    4CE8  BEQ cts_UPDATE_SNAKE_BODY_LOOP_END
+    4CEA  JMP cts_UDPATE_SNAKE_BODY_LOOP
+    4CEC  LDA cts_snake_head_pos
+    4CEE  STA cts_arr_snk_body_pos
+    4CF0  RTS
+    4CF1  LDA cts_snake_head_y
+    4CF3  SUB #1
+    4CF5  STA cts_snake_head_y
+    4CF7  JMP cts_MOVE_SNAKE_END
     4CF9  LDA cts_snake_head_y
-    4CFB  STA cts_arr_snk_body_y
-    4CFD  RTS
-    4CFE  LDA cts_snake_head_y
-    4D00  SUB #1
-    4D02  STA cts_snake_head_y
-    4D04  JMP cts_MOVE_SNAKE_END
-    4D06  LDA cts_snake_head_y
-    4D08  ADD #1
-    4D0A  STA cts_snake_head_y
-    4D0C  JMP cts_MOVE_SNAKE_END
-    4D0E  LDA cts_snake_head_x
-    4D10  SUB #1
-    4D12  STA cts_snake_head_x
-    4D14  JMP cts_MOVE_SNAKE_END
+    4CFB  ADD #1
+    4CFD  STA cts_snake_head_y
+    4CFF  JMP cts_MOVE_SNAKE_END
+    4D01  LDA cts_snake_head_x
+    4D03  SUB #1
+    4D05  STA cts_snake_head_x
+    4D07  JMP cts_MOVE_SNAKE_END
+    4D09  LDA cts_snake_head_x
+    4D0B  ADD #1
+    4D0D  STA cts_snake_head_x
+    4D0F  JMP cts_MOVE_SNAKE_END
+    4D11  PLA
+    4D12  JSR cts_GAME_BLINK
+    4D14  JMP cts_MAIN_MENU
     4D16  LDA cts_snake_head_x
-    4D18  ADD #1
-    4D1A  STA cts_snake_head_x
-    4D1C  JMP cts_MOVE_SNAKE_END
-    4D1E  PLA
-    4D1F  JMP cts_MAIN_MENU
-    4D21  LDA cts_snake_head_x
-    4D23  JSR cts_CHECK_X_BOUNDS
-    4D25  BEQ cts_GAME_LOST
-    4D27  LDA cts_snake_head_y
-    4D29  JSR cts_CHECK_Y_BOUNDS
-    4D2B  BEQ cts_GAME_LOST
-    4D2D  LDA cts_snake_head_pos
-    4D2F  CMP cts_apple_pos
-    4D31  BNE cts_NO_APPLE_HIT
-    4D33  LDA cts_score
-    4D35  ADD #1
-    4D37  STA cts_score
-    4D39  JSR cts_RESPAWN_APPLE
-    4D3B  LDX cts_snk_body_len
-    4D3D  INC cts_snk_body_len
-    4D3F  LDA cts_snk_body_tail_x
-    4D41  STA [cts_arr_snk_body_x, X]
-    4D43  LDA cts_snk_body_tail_y
-    4D45  STA [cts_arr_snk_body_y, X]
-    4D47  RTS
-    4D48  LDA cts_apple_pos
-    4D4A  ADD #17
-    4D4C  AND #$00FF
-    4D4E  STA cts_apple_pos
-    4D50  RTS
-    4D51  JSR clear_screen
-    4D53  LDA #(36*17)
-    4D55  STA index
-    4D57  LDA cts_score
-    4D59  JSR PRBYTE
-    4D5B  LDA cts_apple_pos
-    4D5D  STA index
-    4D5F  LDA #$38
-    4D61  JSR ECHO
-    4D63  LDA cts_snake_head_pos
-    4D65  STA index
-    4D67  LDA #3
-    4D69  JSR ECHO
-    4D6B  LDY cts_snk_body_len
-    4D6D  DEY
-    4D6E  BCS cts_DRAW_SNKBODY_END
-    4D70  LDA #36
-    4D72  LDX [cts_arr_snk_body_y, Y]
-    4D74  JSR multiply
-    4D76  ADD [cts_arr_snk_body_x, Y]
-    4D78  STA index
-    4D7A  LDA #3
-    4D7C  JSR ECHO
-    4D7E  JMP cts_DRAW_SNKBODY_LOOP
-    4D80  NOP
-    4D81  RTS
-    4D82  LDX #3
-    4D84  BEQ cts_GAME_BLINK_END
-    4D86  JSR clear_screen
-    4D88  LDA 1000
-    4D8A  STA $6DE0
-    4D8C  JSR wait
-    4D8E  JSR cts_DRAW_ALL
-    4D90  LDA 1000
-    4D92  STA $6DE0
-    4D94  JSR wait
-    4D96  DEX
-    4D97  JMP cts_GAME_BLINK_LOOP
-    4D99  RTS
-    4D9A  CMP #(sc_width)
-    4D9C  BCS cts_CHECK_X_BOUNDS_FAILED
-    4D9E  LDX #1
-    4DA0  RTS
-    4DA1  LDX #0
-    4DA3  RTS
-    4DA4  CMP #(sc_height)
-    4DA6  BCS cts_CHECK_Y_BOUNDS_FAILED
-    4DA8  LDX #1
-    4DAA  RTS
-    4DAB  LDX #0
-    4DAD  RTS
-    4DAE  : "        === CATCH THE STAR ===%\"
-    4DB0  : "W A S D TO MOVE%1. PLAY%2. EXIT\"
-    4DB2  : 0000
+    4D18  JSR cts_CHECK_X_BOUNDS
+    4D1A  BEQ cts_GAME_LOST
+    4D1C  LDA cts_snake_head_y
+    4D1E  JSR cts_CHECK_Y_BOUNDS
+    4D20  BEQ cts_GAME_LOST
+    4D22  LDA cts_snake_head_pos
+    4D24  CMP cts_apple_pos
+    4D26  BNE cts_NO_APPLE_HIT
+    4D28  LDA cts_score
+    4D2A  ADD #1
+    4D2C  STA cts_score
+    4D2E  JSR cts_RESPAWN_APPLE
+    4D30  LDX cts_snk_body_len
+    4D32  INC cts_snk_body_len
+    4D34  LDA cts_snk_body_tail_pos
+    4D36  STA [cts_arr_snk_body_pos, X]
+    4D38  LDX cts_snk_body_len
+    4D3A  CPX #3
+    4D3C  BCC cts_CHECK_SNAKE_SELF_HIT_END
+    4D3E  DEX
+    4D3F  CPX #2
+    4D41  BEQ cts_CHECK_SNAKE_SELF_HIT_END
+    4D43  LDA [cts_arr_snk_body_pos, X]
+    4D45  CMP cts_snake_head_pos
+    4D47  BEQ cts_GAME_LOST
+    4D49  JMP cts_CHECK_SNAKE_SELF_HIT_LOOP
+    4D4B  RTS
+    4D4C  LDA cts_apple_pos
+    4D4E  ADD #17
+    4D50  AND #$00FF
+    4D52  STA cts_apple_pos
+    4D54  RTS
+    4D55  JSR bit_clear_screen
+    4D57  LDA #(36*17)
+    4D59  STA bit_index
+    4D5B  LDA cts_score
+    4D5D  JSR PRBYTE
+    4D5F  LDA cts_apple_pos
+    4D61  STA bit_index
+    4D63  LDA #$38
+    4D65  JSR ECHO
+    4D67  CPY #1
+    4D69  BEQ cts_DRAW_SNKBODY_END
+    4D6B  LDA cts_snake_head_pos
+    4D6D  STA bit_index
+    4D6F  LDA #3
+    4D71  JSR ECHO
+    4D73  LDX cts_snk_body_len
+    4D75  DEX
+    4D76  BCS cts_DRAW_SNKBODY_END
+    4D78  LDA [cts_arr_snk_body_pos, X]
+    4D7A  STA bit_index
+    4D7C  LDA #3
+    4D7E  JSR ECHO
+    4D80  JMP cts_DRAW_SNKBODY_LOOP
+    4D82  NOP
+    4D83  DUP
+    4D84  RTS
+    4D85  LDX #3
+    4D87  BEQ cts_GAME_BLINK_END
+    4D89  TXA
+    4D8A  PHA
+    4D8B  LDY #1
+    4D8D  JSR cts_DRAW_ALL
+    4D8F  LDA #$5FFF
+    4D91  STA $6DE0
+    4D93  JSR wait
+    4D95  LDY #0
+    4D97  JSR cts_DRAW_ALL
+    4D99  LDA #$5FFF
+    4D9B  STA $6DE0
+    4D9D  JSR wait
+    4D9F  PLA
+    4DA0  TAX
+    4DA1  DEX
+    4DA2  JMP cts_GAME_BLINK_LOOP
+    4DA4  RTS
+    4DA5  CMP #(bit_sc_width)
+    4DA7  BCS cts_CHECK_X_BOUNDS_FAILED
+    4DA9  LDX #1
+    4DAB  RTS
+    4DAC  LDX #0
+    4DAE  RTS
+    4DAF  CMP #(bit_sc_height)
+    4DB1  BCS cts_CHECK_Y_BOUNDS_FAILED
+    4DB3  LDX #1
+    4DB5  RTS
+    4DB6  LDX #0
+    4DB8  RTS
+    4DB9  : "        === CATCH THE STAR ===%\"
+    4DBB  : "W A S D TO MOVE%1. PLAY%2. EXIT\"
+    4DBD  : 0000
 ` $5280
-.XAMCH   5A26
-.STCH   5A27
-.CH   5A28
-.YSAV   5A29
-.ASAV   5A2A
-.MODE   5A2B
+.XAMCH   5A28
+.XAMCH_BK   5A29
+.STCH   5A2A
+.CH   5A2B
+.YSAV   5A2C
+.ASAV   5A2D
+.MODE   5A2E
 .IN = $5000
-.A_temp   5A2C
-    5280  JSR clear_screen
+.A_temp   5A2F
+    5280  JSR bit_clear_screen
     5282  LDY #$FFFF
     5284  CMP #$FF
     5286  BEQ BACKSPACE
@@ -637,120 +704,148 @@
     5297  LDY #1
     5299  DEY
     529A  BCS GETLINE
-    529C  LDA KBDCR
-    529E  BEQ NEXTCHAR
-    52A0  DEC KBDCR
-    52A2  LDA KBD
-    52A4  STA [IN, Y]
-    52A6  JSR ECHO
-    52A8  CMP #$FE
-    52AA  BNE NOTCR
-    52AC  LDY #$FFFF
-    52AE  LDA #$00
-    52B0  TAX
-    52B1  STA MODE
-    52B3  INY
-    52B4  LDA [IN, Y]
-    52B6  CMP #$FE
-    52B8  BEQ GETLINE
-    52BA  CMP #$4E
-    52BC  BEQ BLSKIP
-    52BE  CMP #$48
-    52C0  BEQ SETMODE
-    52C2  CMP #$4A
-    52C4  BEQ SETMODE
-    52C6  CMP #$3B
-    52C8  BEQ RUN
-    52CA  STX CH
-    52CC  STY YSAV
-    52CE  LDA [IN, Y]
-    52D0  CMP #$14
-    52D2  BCS HEX
-    52D4  SUB #$A
-    52D6  JMP DIG
-    52D8  SUB #$20
-    52DA  CMP #$10
-    52DC  BCS NOTHEX
-    52DE  TAX
-    52DF  LDA CH
-    52E1  SLA #4
-    52E3  STA CH
-    52E5  TXA
-    52E6  LDX #0
-    52E8  ADD CH
-    52EA  STA CH
-    52EC  INY
-    52ED  JMP NEXTHEX
-    52EF  CPY YSAV
-    52F1  BEQ ESCAPE
-    52F3  LDA MODE
-    52F5  CMP #$4A
-    52F7  BNE NOTSTOR
-    52F9  LDA CH
-    52FB  STA [STCH], 0
-    52FD  INC STCH
-    52FF  JMP NEXTITEM
-    5301  JSR [XAMCH], 0
-    5303  JMP RESET
-    5305  CMP #$00
-    5307  BNE XAMNEXT
-    5309  LDA CH
-    530B  STA STCH
-    530D  STA XAMCH
-    530F  LDX #0
-    5311  BNE PRDATA
-    5313  LDA #$FE
-    5315  JSR ECHO
-    5317  LDA XAMCH
-    5319  JSR PRSHORT
-    531B  LDA #$4A
-    531D  JSR ECHO
-    531F  LDA #00
-    5321  JSR ECHO
-    5323  LDA [XAMCH], 0
-    5325  JSR PRSHORT
-    5327  STX MODE
-    5329  LDA XAMCH
-    532B  CMP CH
-    532D  BCS TONEXTITEM
-    532F  INC XAMCH
-    5331  LDA XAMCH
-    5333  AND #3
-    5335  JMP NXTPRNT
-    5337  STA ASAV
-    5339  SRA #12
-    533B  JSR PRHEX
-    533D  LDA ASAV
-    533F  SRA #8
-    5341  JSR PRHEX
-    5343  LDA ASAV
-    5345  JMP PRBYTE_NOSAVE
-    5347  STA ASAV
-    5349  SRA #4
-    534B  JSR PRHEX
-    534D  LDA ASAV
-    534F  AND #$000F
-    5351  ADD #$A
-    5353  CMP #20
-    5355  BCC ECHO
-    5357  ADD #22
-    5359  STA A_temp
-    535B  LDA A_temp
-    535D  STA $6DE0
-    535F  JSR print_char
-    5361  LDA A_temp
-    5363  RTS
-    5364  STA A_temp
-    5366  LDA A_temp
-    5368  STA $6DE0
-    536A  JSR print_str
-    536C  RTS
-    536D  : "===== WELCOME TO WOZMON ========%%=== PROGRAMS INSTALLED ===%1. PONGO: 3900%2. SNAKYY: 4C00%\"
-    536F  LDA #1
-    5371  STA KBDCR
-    5373  LDA $6F00
-    5375  STA KBD
-    5377  RTS
+    529C  DUP
+    529D  LDA KBDCR
+    529F  BEQ NEXTCHAR
+    52A1  DEC KBDCR
+    52A3  LDA KBD
+    52A5  STA [IN, Y]
+    52A7  JSR ECHO
+    52A9  CMP #$FE
+    52AB  BNE NOTCR
+    52AD  LDY #$FFFF
+    52AF  LDA #$00
+    52B1  TAX
+    52B2  STA MODE
+    52B4  INY
+    52B5  DUP
+    52B6  LDA [IN, Y]
+    52B8  CMP #$FE
+    52BA  BEQ GETLINE
+    52BC  CMP #$4E
+    52BE  BEQ BLSKIP
+    52C0  CMP #$48
+    52C2  BEQ SETMODE
+    52C4  CMP #$4A
+    52C6  BEQ SETMODE
+    52C8  CMP #$3B
+    52CA  BEQ RUN
+    52CC  STX CH
+    52CE  STY YSAV
+    52D0  LDA [IN, Y]
+    52D2  CMP #$14
+    52D4  BCS HEX
+    52D6  SUB #$A
+    52D8  JMP DIG
+    52DA  SUB #$20
+    52DC  CMP #$10
+    52DE  BCS NOTHEX
+    52E0  TAX
+    52E1  LDA CH
+    52E3  SLA #4
+    52E5  STA CH
+    52E7  TXA
+    52E8  LDX #0
+    52EA  ADD CH
+    52EC  STA CH
+    52EE  INY
+    52EF  JMP NEXTHEX
+    52F1  CPY YSAV
+    52F3  BEQ ESCAPE
+    52F5  LDA MODE
+    52F7  CMP #$4A
+    52F9  BNE NOTSTOR
+    52FB  LDA CH
+    52FD  STA [STCH], 0
+    52FF  INC STCH
+    5301  JMP NEXTITEM
+    5303  JSR [XAMCH], 0
+    5305  JMP RESET
+    5307  CMP #$00
+    5309  BNE XAMNEXT
+    530B  LDA CH
+    530D  STA STCH
+    530F  STA XAMCH
+    5311  STA XAMCH_BK
+    5313  LDX #0
+    5315  DUP
+    5316  BNE PRDATA
+    5318  INC bit_index
+    531A  JSR PRBIN
+    531C  LDA #$FE
+    531E  JSR ECHO
+    5320  LDA XAMCH
+    5322  JSR PRSHORT
+    5324  LDA #$4A
+    5326  JSR ECHO
+    5328  LDA #00
+    532A  JSR ECHO
+    532C  LDA [XAMCH], 0
+    532E  JSR PRSHORT
+    5330  STX MODE
+    5332  LDA XAMCH
+    5334  CMP CH
+    5336  BCS TONEXTITEM
+    5338  INC XAMCH
+    533A  LDA XAMCH
+    533C  AND #3
+    533E  JMP NXTPRNT
+    5340  LDA XAMCH_BK
+    5342  CMP XAMCH
+    5344  BEQ PR_BIN_END
+    5346  LDA [XAMCH_BK], 0
+    5348  SRA #8
+    534A  BEQ PR_BIN_DOT_RIGHT
+    534C  CMP #74
+    534E  BCS PR_BIN_DOT_RIGHT
+    5350  JSR ECHO
+    5352  LDA [XAMCH_BK], 0
+    5354  AND #$FF
+    5356  BEQ PR_BIN_DOT_LEFT
+    5358  CMP #74
+    535A  BCS PR_BIN_DOT_LEFT
+    535C  JSR ECHO
+    535E  INC XAMCH_BK
+    5360  JMP PRBIN
+    5362  RTS
+    5363  LDA #73
+    5365  JMP PR_BIN_DOT_RIGHT_END
+    5367  LDA #73
+    5369  JMP PR_BIN_DOT_LEFT_END
+    536B  STA ASAV
+    536D  SRA #12
+    536F  JSR PRHEX
+    5371  LDA ASAV
+    5373  SRA #8
+    5375  JSR PRHEX
+    5377  LDA ASAV
+    5379  JMP PRBYTE_NOSAVE
+    537B  STA ASAV
+    537D  SRA #4
+    537F  JSR PRHEX
+    5381  LDA ASAV
+    5383  AND #$000F
+    5385  ADD #$A
+    5387  CMP #20
+    5389  BCC ECHO
+    538B  ADD #22
+    538D  STA A_temp
+    538F  LDA A_temp
+    5391  STA $6DE0
+    5393  JSR print_char
+    5395  LDA A_temp
+    5397  RTS
+    5398  STA A_temp
+    539A  LDA A_temp
+    539C  STA $6DE0
+    539E  JSR print_str
+    53A0  RTS
+    53A1  : "===== WELCOME TO WOZMON ========%%=== PROGRAMS INSTALLED ===%1. BYTEHELL DOOM: 3000%2. PONGO: 3900%3. SNAKYY: 4C00%\"
+    53A3  LDA #1
+    53A5  STA KBDCR
+    53A7  LDA $6F00
+    53A9  STA KBD
+    53AB  RTS
 ` $5900
     5900  JMP ECHO
 ` $6DF0

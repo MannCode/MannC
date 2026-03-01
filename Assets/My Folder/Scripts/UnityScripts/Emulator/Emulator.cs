@@ -844,9 +844,15 @@ public class Emulator : MonoBehaviour
                     else F_Z = false;
                     updateFlag(A);
                     break;
+                case 0xfffa: //UBS
+                    sc.useBitmapScreenMode();
+                    break;
+                case 0xfffb: //UPS
+                    sc.usePixelScreenMode();
+                    break;
                 case 0xfffc: //CLS
                     sc.deleteBackupScreens();
-                    Array.Clear(mem.Data, 0x7000, 256 * 144);
+                    Array.Clear(mem.Data, 0xB577, (256*144/2)+(36*18));
                     break;
                 case 0xfffd: //CNP (Clear to new page)
                     sc.storeCurrentScreenBackup();
