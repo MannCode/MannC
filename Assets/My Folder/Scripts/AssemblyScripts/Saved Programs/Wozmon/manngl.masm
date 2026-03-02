@@ -1,0 +1,8 @@
+; ==============================================
+;       MannGL - Custom graphics Library
+;        for MANN-16Bit run with wozmon
+; ==============================================
+
+MannGL_Init:
+    ; graphics library initialization
+    RTS

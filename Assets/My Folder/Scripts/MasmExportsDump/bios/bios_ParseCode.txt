@@ -1,3 +1,8 @@
+.p_wozmon = $5280
+.p_byteHell = $3000
+.p_pongo = $3900
+.p_snakyy = $4C00
+.l_manngl = $2000
 .bit_index   5A00
 .bit_indexStart = $B577
 .bit_index_sc   5A01
@@ -15,151 +20,154 @@
     0000  UBS
     0001  LDA #$b2
     0003  STA rand_seed
-    0005  JMP $5280
+    0005  JSR l_manngl
+    0007  JMP p_wozmon
 .str_char   5A08
 .str_msg   5A09
-    0007  LDA $6DE0
-    0009  STA str_msg
-    000B  LDA [str_msg], X
-    000D  BEQ print_str_done
-    000F  STA str_char
-    0011  LDA str_char
-    0013  STA $6DE0
-    0015  JSR print_char
-    0017  INX
-    0018  JMP print_str_loop
-    001A  LDX #0
-    001C  RTS
-    001D  LDA $6DE0
-    001F  STA $6DE0
-    0021  JSR set_char
-    0023  INC bit_index
-    0025  RTS
-    0026  LDA bit_index
-    0028  ADD #(bit_indexStart)
-    002A  STA bit_index_sc
-    002C  CMP #$B7FF
-    002E  BCS bit_cls_bios
-    0030  LDA $6DE0
-    0032  CMP #$FE
-    0034  BEQ return_bios
-    0036  CMP #$FF
-    0038  BEQ backspace_bios
-    003A  CMP #$FD
-    003C  BEQ set_char_end
-    003E  STA [bit_index_sc], 0
-    0040  RTS
-    0041  CLS
-    0042  LDA #00
-    0044  STA bit_index
-    0046  LDA #(bit_indexStart)
-    0048  STA bit_index_sc
-    004A  RTS
-    004B  JSR bit_clear_screen
-    004D  JMP sc_cls_bios_end
+    0009  LDA $6DE0
+    000B  STA str_msg
+    000D  LDA [str_msg], X
+    000F  BEQ print_str_done
+    0011  STA str_char
+    0013  LDA str_char
+    0015  STA $6DE0
+    0017  JSR print_char
+    0019  INX
+    001A  JMP print_str_loop
+    001C  LDX #0
+    001E  RTS
+    001F  LDA $6DE0
+    0021  STA $6DE0
+    0023  JSR set_char
+    0025  INC bit_index
+    0027  RTS
+    0028  LDA bit_index
+    002A  ADD #(bit_indexStart)
+    002C  STA bit_index_sc
+    002E  CMP #$B7FF
+    0030  BCS bit_cls_bios
+    0032  LDA $6DE0
+    0034  CMP #$FE
+    0036  BEQ return_bios
+    0038  CMP #$FF
+    003A  BEQ backspace_bios
+    003C  CMP #$FD
+    003E  BEQ set_char_end
+    0040  STA [bit_index_sc], 0
+    0042  RTS
+    0043  CLS
+    0044  LDA #00
+    0046  STA bit_index
+    0048  LDA #(bit_indexStart)
+    004A  STA bit_index_sc
+    004C  RTS
+    004D  JSR bit_clear_screen
+    004F  JMP sc_cls_bios_end
 .mod_val   5A0A
-    004F  PHA
-    0050  LDA bit_index
-    0052  STA $6DE0
-    0054  LDA #(bit_sc_width)
-    0056  STA $6DE1
-    0058  JSR mod
-    005A  STA mod_val
-    005C  LDA #(bit_sc_width)
-    005E  SUB mod_val
-    0060  ADD bit_index
-    0062  STA bit_index
-    0064  CMP #(bit_sc_width*bit_sc_height)
-    0066  BNE check_pix_end
-    0068  LDA #0
-    006A  STA bit_index
-    006C  CNP
-    006D  PLA
-    006E  RTS
-    006F  JSR bit_new_line
-    0071  DEC bit_index
-    0073  JMP set_char_end
-    0075  DEC bit_index
-    0077  LDA #0
-    0079  STA $6DE0
-    007B  JSR set_char
-    007D  DEC bit_index
-    007F  JMP set_char_end
-    0081  LDA $6DE0
-    0083  STA $6DE0
-    0085  JSR set_pix
-    0087  INC pix_index
-    0089  RTS
+    0051  PHA
+    0052  LDA bit_index
+    0054  STA $6DE0
+    0056  LDA #(bit_sc_width)
+    0058  STA $6DE1
+    005A  JSR mod
+    005C  STA mod_val
+    005E  LDA #(bit_sc_width)
+    0060  SUB mod_val
+    0062  ADD bit_index
+    0064  STA bit_index
+    0066  CMP #(bit_sc_width*bit_sc_height)
+    0068  BNE check_pix_end
+    006A  LDA #0
+    006C  STA bit_index
+    006E  CNP
+    006F  PLA
+    0070  RTS
+    0071  JSR bit_new_line
+    0073  DEC bit_index
+    0075  JMP set_char_end
+    0077  DEC bit_index
+    0079  LDA #0
+    007B  STA $6DE0
+    007D  JSR set_char
+    007F  DEC bit_index
+    0081  JMP set_char_end
+    0083  LDA $6DE0
+    0085  STA $6DE0
+    0087  JSR set_pix
+    0089  INC pix_index
+    008B  RTS
 .pix_value_temp   5A0B
-    008A  LDA pix_index
-    008C  SRA #1
-    008E  ADD #(pix_indexStart)
-    0090  STA pix_index_sc
-    0092  BCS PIX_RESET_BIOS
-    0094  LDA pix_index
-    0096  AND #1
-    0098  BEQ SET_PIX_RIGHT_SIDE
-    009A  LDA [pix_index_sc], 0
-    009C  AND #$FF00
-    009E  ORA $6DE0
-    00A0  STA [pix_index_sc], 0
-    00A2  JMP SET_PIX_END
-    00A4  LDA [pix_index_sc], 0
-    00A6  AND #$00FF
-    00A8  STA pix_value_temp
-    00AA  LDA $6DE0
-    00AC  SLA #8
-    00AE  ADD pix_value_temp
-    00B0  STA [pix_index_sc], 0
-    00B2  RTS
-    00B3  DUP
-    00B4  CLS
-    00B5  LDA #00
-    00B7  STA pix_index
-    00B9  LDA #(pix_indexStart)
-    00BB  STA pix_index_sc
-    00BD  RTS
-    00BE  JSR PIX_CLEAR_SCREEN
-    00C0  JMP PIX_RESET_BIOS_END
+    008C  LDA pix_index
+    008E  SRA #1
+    0090  ADD #(pix_indexStart)
+    0092  STA pix_index_sc
+    0094  BCS PIX_RESET_BIOS
+    0096  LDA pix_index
+    0098  AND #1
+    009A  BEQ SET_PIX_RIGHT_SIDE
+    009C  LDA [pix_index_sc], 0
+    009E  AND #$FF00
+    00A0  ORA $6DE0
+    00A2  STA [pix_index_sc], 0
+    00A4  JMP SET_PIX_END
+    00A6  LDA [pix_index_sc], 0
+    00A8  AND #$00FF
+    00AA  STA pix_value_temp
+    00AC  LDA $6DE0
+    00AE  SLA #8
+    00B0  ADD pix_value_temp
+    00B2  STA [pix_index_sc], 0
+    00B4  RTS
+    00B5  DUP
+    00B6  CLS
+    00B7  LDA #00
+    00B9  STA pix_index
+    00BB  LDA #(pix_indexStart)
+    00BD  STA pix_index_sc
+    00BF  RTS
+    00C0  JSR PIX_CLEAR_SCREEN
+    00C2  JMP PIX_RESET_BIOS_END
 .mul_temp   5A0C
 .mul_counter   5A0D
 .mul_result   5A0E
-    00C2  STA mul_temp
-    00C4  STX mul_counter
-    00C6  LDA #0
-    00C8  STA mul_result
-    00CA  LDA mul_counter
-    00CC  BEQ mul_end
-    00CE  LDA mul_result
-    00D0  ADD mul_temp
-    00D2  STA mul_result
-    00D4  DEC mul_counter
-    00D6  JMP mul_loop
-    00D8  LDA mul_result
-    00DA  RTS
-    00DB  LDA $6DE0
-    00DD  CMP $6DE1
-    00DF  BCC break_mod
-    00E1  SUB $6DE1
-    00E3  JMP mod_loop
-    00E5  RTS
-    00E6  LDA rand_temp
-    00E8  LDX #173
-    00EA  JSR multiply
-    00EC  ADD #13849
-    00EE  STA rand_seed
-    00F0  RTS
-    00F1  RTS
-    00F2  LDX $6DE0
-    00F4  DEX
-    00F5  BEQ wait_end
-    00F7  NOP
-    00F8  NOP
+    00C4  STA mul_temp
+    00C6  STX mul_counter
+    00C8  LDA #0
+    00CA  STA mul_result
+    00CC  LDA mul_counter
+    00CE  BEQ mul_end
+    00D0  LDA mul_result
+    00D2  ADD mul_temp
+    00D4  STA mul_result
+    00D6  DEC mul_counter
+    00D8  JMP mul_loop
+    00DA  LDA mul_result
+    00DC  RTS
+    00DD  LDA $6DE0
+    00DF  CMP $6DE1
+    00E1  BCC break_mod
+    00E3  SUB $6DE1
+    00E5  JMP mod_loop
+    00E7  RTS
+    00E8  LDA rand_temp
+    00EA  LDX #173
+    00EC  JSR multiply
+    00EE  ADD #13849
+    00F0  STA rand_seed
+    00F2  RTS
+    00F3  RTS
+    00F4  LDX $6DE0
+    00F6  DEX
+    00F7  BEQ wait_end
     00F9  NOP
     00FA  NOP
-    00FB  JMP wait_loop
-    00FD  RTS
-` $3000
+    00FB  NOP
+    00FC  NOP
+    00FD  JMP wait_loop
+    00FF  RTS
+` l_manngl
+    2000  RTS
+` p_byteHell
 .bhd_pix_value   5A0F
     3000  UPS
     3001  LDA #$FF
@@ -169,7 +177,7 @@
     3009  JSR print_pix
     300B  JMP bhd_LOOP
     300D  HLT
-` $3900
+` p_pongo
 .pong_player_pos   5A10
 .pong_star_pos   5A11
 .pong_leftTile_pos   5A12
@@ -428,7 +436,7 @@
     3AD6  : "OH. YOU LOST. BETTER LUCK NEXT TIME%\"
     3AD8  : "GAMES WON: \"
     3ADA  : "GAMES PLAYED: \"
-` $4C00
+` p_snakyy
 .cts_apple_pos   5A1D
 .cts_score   5A1E
 .cts_snake_head_x   5A1F
@@ -642,44 +650,43 @@
     4D7C  LDA #3
     4D7E  JSR ECHO
     4D80  JMP cts_DRAW_SNKBODY_LOOP
-    4D82  NOP
-    4D83  DUP
-    4D84  RTS
-    4D85  LDX #3
-    4D87  BEQ cts_GAME_BLINK_END
-    4D89  TXA
-    4D8A  PHA
-    4D8B  LDY #1
-    4D8D  JSR cts_DRAW_ALL
-    4D8F  LDA #$5FFF
-    4D91  STA $6DE0
-    4D93  JSR wait
-    4D95  LDY #0
-    4D97  JSR cts_DRAW_ALL
-    4D99  LDA #$5FFF
-    4D9B  STA $6DE0
-    4D9D  JSR wait
-    4D9F  PLA
-    4DA0  TAX
-    4DA1  DEX
-    4DA2  JMP cts_GAME_BLINK_LOOP
-    4DA4  RTS
-    4DA5  CMP #(bit_sc_width)
-    4DA7  BCS cts_CHECK_X_BOUNDS_FAILED
-    4DA9  LDX #1
-    4DAB  RTS
-    4DAC  LDX #0
-    4DAE  RTS
-    4DAF  CMP #(bit_sc_height)
-    4DB1  BCS cts_CHECK_Y_BOUNDS_FAILED
-    4DB3  LDX #1
-    4DB5  RTS
-    4DB6  LDX #0
-    4DB8  RTS
-    4DB9  : "        === CATCH THE STAR ===%\"
-    4DBB  : "W A S D TO MOVE%1. PLAY%2. EXIT\"
-    4DBD  : 0000
-` $5280
+    4D82  DUP
+    4D83  RTS
+    4D84  LDX #3
+    4D86  BEQ cts_GAME_BLINK_END
+    4D88  TXA
+    4D89  PHA
+    4D8A  LDY #1
+    4D8C  JSR cts_DRAW_ALL
+    4D8E  LDA #$5FFF
+    4D90  STA $6DE0
+    4D92  JSR wait
+    4D94  LDY #0
+    4D96  JSR cts_DRAW_ALL
+    4D98  LDA #$5FFF
+    4D9A  STA $6DE0
+    4D9C  JSR wait
+    4D9E  PLA
+    4D9F  TAX
+    4DA0  DEX
+    4DA1  JMP cts_GAME_BLINK_LOOP
+    4DA3  RTS
+    4DA4  CMP #(bit_sc_width)
+    4DA6  BCS cts_CHECK_X_BOUNDS_FAILED
+    4DA8  LDX #1
+    4DAA  RTS
+    4DAB  LDX #0
+    4DAD  RTS
+    4DAE  CMP #(bit_sc_height)
+    4DB0  BCS cts_CHECK_Y_BOUNDS_FAILED
+    4DB2  LDX #1
+    4DB4  RTS
+    4DB5  LDX #0
+    4DB7  RTS
+    4DB8  : "        === CATCH THE STAR ===%\"
+    4DBA  : "W A S D TO MOVE%1. PLAY%2. EXIT\"
+    4DBC  : 0000
+` p_wozmon
 .XAMCH   5A28
 .XAMCH_BK   5A29
 .STCH   5A2A

@@ -1,11 +1,14 @@
-` $3000
-#link "byteHell"
+` l_manngl
+#link "Manngl"                ; graphics library
 
-` $3900
-#link "pongo"
+` p_byteHell
+#link "byteHell"        ; doom game
 
-` $4C00
-#link "snakyy"
+` p_pongo
+#link "pongo"           ; pong game
 
-` $5280
-#link "wozmon"
+` p_snakyy
+#link "snakyy"          ; snake game
+
+` p_wozmon
+#link "wozmon"          ; wozmon

@@ -3,6 +3,15 @@
 ; ======================================
 
 
+; programs installed
+.p_wozmon = $5280
+.p_byteHell = $3000
+.p_pongo = $3900
+.p_snakyy = $4C00
+
+; libraries installed
+.l_manngl = $2000
+
 ; Screen Variables
 ; Bitmap screen
 .bit_index                  ; 0 -> 36*18
@@ -28,9 +37,14 @@
 
 start:
     UBS             ; Use bitmap screen mode
+
     LDA #$b2        ; random number seed
     STA rand_seed
-    JMP $5280
+
+    ; load the libraries
+    JSR l_manngl
+    
+    JMP p_wozmon
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

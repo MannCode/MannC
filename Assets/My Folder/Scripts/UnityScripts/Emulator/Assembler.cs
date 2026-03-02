@@ -371,7 +371,8 @@ public class Assembler : MonoBehaviour
 
             if (temp[0][0] == '`')
             {
-                addIndex = (ushort)Convert.ToInt16(temp[1][1..], 16);
+                // addIndex = (ushort)Convert.ToInt16(temp[1][1..], 16);
+                addIndex = evaluate(temp[1], i).Item1;
             } 
         }
 
@@ -788,7 +789,7 @@ public class Assembler : MonoBehaviour
                 //its a direct memory code to store shorts directly inside memory
                 stm.WriteLine(ln);
                 SourceCode += ln + "\n";
-                addIndex = (ushort)Convert.ToInt16(ln.Split(' ')[1][1..], 16);
+                addIndex = evaluate(ln.Split(' ')[1], 0).Item1;
             }
             else
             {
