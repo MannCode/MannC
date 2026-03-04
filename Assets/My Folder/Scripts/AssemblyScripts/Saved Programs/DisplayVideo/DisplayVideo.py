@@ -3,17 +3,18 @@ import cv2
 brighness_map = [0, 68, 69, 70, 71, 1, 2, 3]
 
 program_1 = '''
-.screen_size = $7288
+.screen_size = $B7FF
 .pixel_index
 .frame_count
 .index
 
 start:
+    UBS
     LDA #$40
     STA pixel_index
     LDA #(frames)
     STA frame_count
-    LDA #$7000
+    LDA #$B577
     STA index
 
 loop:
@@ -26,7 +27,7 @@ loop:
 
 reset:
     DUP
-    LDA #$7000
+    LDA #$B577
     STA index
     DEC frame_count
     BEQ start
@@ -69,9 +70,9 @@ def convert_vid_to_indexes(vid_path):
 
     while success:
         count += 1
-        if count < 44 or count % 5 != 0:
-            success, image = cap.read()
-            continue
+        # if count % 5 != 0:
+        #     success, image = cap.read()
+        #     continue
         if count > 400 * 5:
             break           
         frames += 1
@@ -110,7 +111,7 @@ def convert_vid_to_indexes(vid_path):
 
     print("Total frames generated: ", frames)
 
-    with open("/Users/mandeepsingh/MyStuff/Programming/Unity/Projects/MannC/Assets/My Folder/Scripts/Saved Programs/DisplayVideo/DisplayVideo.masm", "w") as output_file:
+    with open("/Users/mandeepsingh/MyStuff/Programming/Unity/Projects/MannC/Assets/My Folder/Scripts/AssemblyScripts/Saved Programs/DisplayVideo/DisplayVideo.masm", "w") as output_file:
         print("Writing to file")
         output_file.write(program)
 

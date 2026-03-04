@@ -1,0 +1,15 @@
+Variables:
+      frames = 0x005A
+      screen_size = 0xB7FF
+      pixel_index = 0x5A00
+      frame_count = 0x5A01
+      index = 0x5A02
+      MultipleCount = 0x5A03
+
+Lables:
+      start = 0x0000
+      loop = 0x000D
+      reset = 0x0019
+      DrawMultiple = 0x0024
+      DrawMultipleLoop = 0x002E
+      DrawMultipleEnd = 0x0038

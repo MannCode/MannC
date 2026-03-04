@@ -9,7 +9,7 @@ using Unity.Mathematics;
 public class UIManager : MonoBehaviour
 {
     public TMP_Text clock;
-    public TMP_Text setClockSpeed;
+    public TMP_Text currentClockSpeed;
 
     public Emulator emu;
     Emulator.CPU cpu;
@@ -66,10 +66,13 @@ public class UIManager : MonoBehaviour
             m_data.text = Convert.ToString(cpu.readShort(mem, add), 16);
         }
         
-        string clockSpeed = FormatClockSpeed(emu.frequency);
+        string frequency = FormatClockSpeed(emu.clock_speed);
 
-        clock.text = "Clock -> "+ clockSpeed.ToString();
-        setClockSpeed.text = emu.index.ToString();
+        clock.text = "Clock -> "+ frequency.ToString();
+        if(emu.cpuSpeedCap == 5) {
+            currentClockSpeed.text = Char.ToString((char)0x263A);   // Smiley face for unlimited speed
+        } else
+        currentClockSpeed.text = FormatClockSpeed(emu.TargetClockSpeed).ToString();
 
         //screen
         screenPageIndex.text = (sc.currentScreenIndex+1).ToString() + "/" + sc.totalScreens.ToString();
@@ -77,25 +80,23 @@ public class UIManager : MonoBehaviour
 
     string FormatClockSpeed(float frequency)
 {
-    if (frequency >= 1_000_000_000) // 1 GHz
+    // if 0.99 then convert to 1
+    int int_frequency = (int)Math.Round(frequency);
+    if (int_frequency >= 1_000_000_000) // 1 GHz
     {
-        return (frequency / 1_000_000_000).ToString("F2") + " GHz";
+        return (int_frequency / 1_000_000_000).ToString() + " GHz";
     }
-    else if (frequency >= 1_000_000) // 1 MHz
+    if (int_frequency >= 1_000_000) // 1 MHz
     {
-        return (frequency / 1_000_000).ToString("F2") + " MHz";
+        return (int_frequency / 1_000_000).ToString() + " MHz";
     }
-    else if (frequency >= 1_000) // 1 KHz
+    else if (int_frequency >= 1_000) // 1 KHz
     {
-        return (frequency / 1_000).ToString("F2") + " KHz";
-    }
-    else if (frequency < 0) // Negative
-    {
-        return Char.ToString((char)0x263A);
+        return (int_frequency / 1_000).ToString() + " KHz";
     }
     else // Hz
     {
-        return frequency.ToString("F2") + " Hz";
+        return int_frequency.ToString() + " Hz";
     }
 }
 }

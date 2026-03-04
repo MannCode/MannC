@@ -1,6 +1,18 @@
 ===============================================
-                # MANN-8Bit #
+                # MANN-16Bit #
 ===============================================
+
+====== Instructions =====
+
+LDA, LDX, LDY, STA, STX, STY, SLA, SRA  (resistors)
+TAX, TAY, TXA, TYA,                     (transfer b/w resistors)
+TSX, TXS, PHA, PLA,                     (stack)
+AND, ORA, XOR,                          (bitwise operations)
+ADD, SUB, CMP, CPX, CPY,                (mathematical operations)
+INC, INX, INY, DEC, DEX, DEY,           (Increament/Decrement)
+JMP, JSR, BCC, BCS, BNE, BEQ            (Jump/conditional jump)
+UBS, UPS, CLS, CNP, DUP,                (screen instructions)
+HLT                                     (Halt cpu)
 
 
 ===== OPcodes =====

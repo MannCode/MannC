@@ -22,6 +22,7 @@ RESET:
     JSR bit_clear_screen
     LDY #$FFFF
 NOTCR:
+    DUP
     CMP #$FF
     BEQ BACKSPACE
     CMP #$FD
@@ -38,8 +39,8 @@ GETLINE:
 BACKSPACE:
     DEY
     BCS GETLINE
-NEXTCHAR:
     DUP
+NEXTCHAR:
     LDA KBDCR
     BEQ NEXTCHAR    ; wait for key press
     DEC KBDCR       ; reseting KBDCR to 0
@@ -92,7 +93,7 @@ DIG:
     ADD CH          ; CH + num
     STA CH          ; store updated CH
     INY
-    JMP NEXTHEX
+   function not showj  JMP NEXTHEX
 NOTHEX:
     CPY YSAV        ; Check if CH is empty (no hex digit)
     BEQ ESCAPE      ; Yes, Crash it mf
