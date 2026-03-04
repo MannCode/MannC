@@ -5,20 +5,11 @@ using System.IO;
 using System;
 using TMPro;
 using UnityEngine.UI;
-using Unity.Mathematics;
 using System.Text;
 using System.Threading;
-using Unity.VisualScripting;
-using UnityEngine.InputSystem;
 
 public class Emulator : MonoBehaviour
 {
-
-    public ScreenRenderer screenRenderer;
-
-    public Toggle toggle;
-
-
     public struct MEM
     {
         public static int maxMem = 65536;
@@ -880,48 +871,53 @@ public class Emulator : MonoBehaviour
         }
     }
 
+    public ScreenRenderer screenRenderer;
+    public Toggle cpuManualClockToggle;
     public CPU cpu;
-    public bool INT; // intrupt flag
-    public bool isCPUinitiated = false;
+    // public bool isCPUinitiated = false;
     public MEM mem;
     public MEM mem_Backup;
-
-
-    public bool isMemLoaded = false;
-
-    //Clock
-    public UnityEngine.UI.Slider cpuSpeedNoDelay;
-    public TMP_InputField maxSpeed;
-
-
-
-    public bool isDelay;
-    bool RunCPUbool;
-    public float clock_speed; // [value] Hz
-    public int clock_step;
-    public int frequency;
-    int rate = 100;
-
-    float timesincecurrentstepsiszero;
-    float currentsteps;
-
-    //Scene
-    public TMP_Text OutputText;
     public Assembler assembler;
+    public bool isMemLoaded = false;
+    public bool INT; // intrupt flag
+    private Thread cpuThread;
+    private bool cpuRunning;
+    public float clock_speed; // [value] Hz
 
-    public ushort[] memDataShower;
+    public UnityEngine.UI.Slider cpuSpeedCapSlider;
+    [Range(0, 5)]
+    public int cpuSpeedCap = 4;    // 0 = 1Hz, 1 = 100Hz, 2 = 1KHz, 3 = 100Khz, 4 = 1MHz, 5 = Unlimited
+    float [] cpuSpeedCaps = new float[] { 1f, 100f, 1000f, 100000f, 1000000f, 0f };
+    public float TargetClockSpeed = 1000000f; // Default to 1MHz, will be updated based on cpuSpeedCap
+
+    public ushort GeneralRAMEnd = 0x6EFF; // General RAM 0x6FFE (inclusive)
+
+    // public UnityEngine.UI.Slider cpuSpeedSlider;
+    // public float sliderMultiplier = 1;
+    // public TMP_InputField maxSpeedInput;
+    // public float maxClockSpeed;
+    // public bool isDelay;
+    // bool RunCPUbool;
+    // public float actualFrequency = 1f; // [value] Hz
+    // public int frequency;
+    // int rate = 100;
+    // float timesincecurrentstepsiszero;
+    // float currentsteps;
+    //Scene
+    // public TMP_Text OutputText;
+
+
 
     public void Start()
     {
-        currentsteps = 0;
-        timesincecurrentstepsiszero = Time.realtimeSinceStartup;
+        // currentsteps = 0;
+        // timesincecurrentstepsiszero = Time.realtimeSinceStartup;
         // Application.targetFrameRate = 500;
         cpu = new CPU();
-        // mem = new MEM(mem.getMemory(programFilePath));
         cpu.HLT = true;
-        cpuSpeedNoDelay.onValueChanged.AddListener(OnCputSpeedNoDelayValueChanged);
-        maxSpeed.onValueChanged.AddListener(OnMaxSpeedValueChanged);
 
+        cpuSpeedCapSlider.onValueChanged.AddListener(OnCPUSpeedCapChange);
+        // maxSpeedInput.onValueChanged.AddListener(OnMaxSpeedValueChanged);
     }
 
     public void loadMem(string programFilePath)
@@ -930,149 +926,132 @@ public class Emulator : MonoBehaviour
         mem_Backup = new MEM(mem_Backup.getMemory(programFilePath));
         cpu.reset();
         isMemLoaded = true;
-        memDataShower = mem.Data;
     }
 
 
     public void StartCPU()
     {
-        RunCPUbool = false;
-        //Get The instruction set from the file and store it in his memory
-        clock_step = 0;
-        // mem = new MEM(mem.getMemory(programFilePath));
-        // loadMem(assembler.binaryFilePath);
-        // print(assembler.binaryFilePath);
-        cpu.reset();
+        if (cpuThread != null && cpuThread.IsAlive)
+        {
+            StopCPU();
+        }
 
+        cpu.reset();
         cpu.HLT = false;
+        cpuRunning = true;
+
+        cpuThread = new Thread(CPUThreadLoop);
+        cpuThread.IsBackground = true;
+        cpuThread.Start();
         //Run The loop
-        if (isDelay) StartCoroutine(RunCPU());
-        else RunCPUbool = true;
+        // if (isDelay) StartCoroutine(RunCPU());
+        // else RunCPUbool = true;
+    }
+
+    public void StopCPU()
+    {
+        cpuRunning = false;
+        if (cpuThread != null && cpuThread.IsAlive)
+        {
+            cpuThread.Join();
+        }
+
+        cpu.HLT = true;
+        cpuThread = null;
+    }
+
+    void CPUThreadLoop()
+    {
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
+
+        double nextTickTime = stopwatch.Elapsed.TotalSeconds ;
+
+        // calculate actual frequency every 100 instructions
+        int instructionCount = 0;
+        var freqTimer = new System.Diagnostics.Stopwatch();
+        freqTimer.Start();
+
+        while (cpuRunning && !cpu.HLT)
+        {
+            if (cpuManualClockToggle.isOn)
+            {
+                clock_speed = 0; // Set clock speed to 0 when manual clock toggle is on
+                continue; // Skip automatic execution if manual clock toggle is on
+            }
+
+            // hard clock speed cap
+            if (cpuSpeedCap != 5) {
+                double secondPerInstruction = 1.0 / TargetClockSpeed;
+                double now = stopwatch.Elapsed.TotalSeconds;
+                if (now < nextTickTime)
+                {
+                    double sleepTime = nextTickTime - now;
+                    if (sleepTime > 0.0005) // Sleep only if the sleep time is greater than 0.5ms to avoid oversleeping
+                    {
+                        Thread.Sleep((int)(sleepTime * 1000)); // Convert to milliseconds and sleep
+                    }
+                    else
+                    {
+                        Thread.Yield(); // Yield the thread to allow other operations if the sleep time is very short
+                    }
+
+                    continue; // Skip execution until the next tick time is reached
+                }
+                nextTickTime += secondPerInstruction;
+            }
+
+            cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
+
+            if (cpu.PC >= GeneralRAMEnd)
+            {
+                cpu.HLT = true;
+                break;
+            }
+
+            instructionCount++;
+            if (freqTimer.Elapsed.TotalSeconds >= 0.3) // Update actual frequency every 100ms
+            {
+                clock_speed = (float)(instructionCount / freqTimer.Elapsed.TotalSeconds);
+                instructionCount = 0;
+                freqTimer.Restart();
+            }
+        }
     }
 
     public void run1Tick()
     {
         //Run One Instruction
-        if (!cpu.HLT && toggle.isOn)
+        if (!cpu.HLT && cpuManualClockToggle.isOn)
             cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
-        clock_step += 8;
-        if (cpu.PC == 0x6EFF)
+
+        if (cpu.PC >= GeneralRAMEnd)
         {
             cpu.HLT = true;
         }
     }
-    [HideInInspector]
-    public int index;
 
-    int resetIndex = 300;
+    // public void SetClockSpeed(float newhz)
+    // {
+    //     clock_speed = Mathf.Max(0.1f, newhz); // Ensure clock speed is not zero or negative
+    // }
 
-    public void ToogleHLT()
+    // public void SetSliderMultiplier(float newMultiplier)
+    // {
+    //     // float with 1 decimal place
+    //     float newSpeed = maxClockSpeed * newMultiplier;
+    //     newSpeed = Mathf.Round(newSpeed * 10f) / 10f; // Round to 1 decimal place
+    //     clock_speed = Mathf.Max(newSpeed, 0.1f); // Adjust clock speed based on the new multiplier
+    // }
+
+    // void OnCPUSpeedMultiplierChange(float newValue)
+    // {
+    //     SetSliderMultiplier(newValue);
+    // }
+
+    void OnCPUSpeedCapChange(float newValue)
     {
-        if (cpu.HLT)
-        {
-            cpu.HLT = false;
-        }
-        else cpu.HLT = true;
-    }
-
-
-    public void Update()
-    {
-        int i = index;
-        if (RunCPUbool && !toggle.isOn)
-        {
-            if (!cpu.HLT)
-            {
-                while (i != 0)
-                {
-                    if (toggle.isOn)
-                        break;
-
-                    if (!cpu.HLT)
-                    {
-                        //Run One Instruction
-                        cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
-                        clock_step += 8;
-                        if (cpu.PC > 0x6EFF)
-                        {
-                            cpu.HLT = true;
-                        }
-                    }
-                    currentsteps++;
-                    i--;
-                }
-            }
-        }
-    }
-
-    public void FixedUpdate()
-    {
-        if (!cpu.HLT)
-        {
-            if (rate == 0)
-            {
-                float timediff = Time.realtimeSinceStartup - timesincecurrentstepsiszero;
-                if (timediff == 0)
-                {
-                    timediff = 0.00001f;
-                }
-                rate = 100;
-                frequency = (int)(currentsteps / timediff);
-            }
-
-            if (resetIndex == 0)
-            {
-                currentsteps = 0;
-                timesincecurrentstepsiszero = Time.realtimeSinceStartup;
-                resetIndex = 300;
-            }
-            resetIndex--;
-            rate--;
-        }
-    }
-
-    void OnMaxSpeedValueChanged(string newHoursValue)
-    {
-
-        if (string.IsNullOrWhiteSpace(newHoursValue))
-            return;
-
-        if (int.TryParse(newHoursValue, out int result))
-        {
-            if (result < 0)
-            {
-                index = 0;
-            }
-            else
-            {
-                index = (int)(int.Parse(maxSpeed.text) * cpuSpeedNoDelay.value);
-                // if(index == 1) index = 0;
-            }
-        }
-    }
-
-    void OnCputSpeedNoDelayValueChanged(float newValue)
-    {
-        OnMaxSpeedValueChanged(maxSpeed.text);
-    }
-
-    IEnumerator RunCPU()
-    {
-        while (true)
-        {
-            while (!cpu.HLT && !toggle.isOn)
-            {
-                //Run One Instruction
-                cpu.execute(cpu, mem, mem_Backup, screenRenderer, ref INT);
-                clock_step += 8;
-                yield return new WaitForSeconds(1 / clock_speed);
-                if (cpu.PC == 0x6EFF)
-                {
-                    cpu.HLT = true;
-                }
-                currentsteps++;
-            }
-            yield return new WaitForEndOfFrame();
-        }
+        cpuSpeedCap = (int)newValue;
+        TargetClockSpeed = cpuSpeedCaps[cpuSpeedCap];
     }
 }
